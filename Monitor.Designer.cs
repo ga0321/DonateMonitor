@@ -60,7 +60,8 @@
             // 
             // BtConfig
             // 
-            this.BtConfig.Location = new System.Drawing.Point(858, 9);
+            this.BtConfig.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.BtConfig.Location = new System.Drawing.Point(858, 8);
             this.BtConfig.Name = "BtConfig";
             this.BtConfig.Size = new System.Drawing.Size(75, 33);
             this.BtConfig.TabIndex = 3;
