@@ -63,6 +63,7 @@
             this.BtPreview_Streamlabs_Paypal = new System.Windows.Forms.Button();
             this.BtPreview_Streamlabs_SubGift = new System.Windows.Forms.Button();
             this.BtPreview_Streamlabs_Bits = new System.Windows.Forms.Button();
+            this.Cb_AutoDeleteOBSOutput = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -104,12 +105,13 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.Cb_AutoDeleteOBSOutput);
             this.groupBox1.Controls.Add(this.RBt_ObsOutputMode_Single);
             this.groupBox1.Controls.Add(this.RBt_ObsOutputMode_NextLine);
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(668, 70);
+            this.groupBox1.Size = new System.Drawing.Size(667, 109);
             this.groupBox1.TabIndex = 3;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "普通設定";
@@ -131,7 +133,7 @@
             this.groupBox2.Controls.Add(this.label3);
             this.groupBox2.Controls.Add(this.Tb_Msg_ECPay_Msg);
             this.groupBox2.Controls.Add(this.label2);
-            this.groupBox2.Location = new System.Drawing.Point(13, 88);
+            this.groupBox2.Location = new System.Drawing.Point(12, 127);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(667, 240);
             this.groupBox2.TabIndex = 4;
@@ -159,7 +161,7 @@
             // Bt_Save
             // 
             this.Bt_Save.Font = new System.Drawing.Font("Noto Sans TC", 14F);
-            this.Bt_Save.Location = new System.Drawing.Point(13, 544);
+            this.Bt_Save.Location = new System.Drawing.Point(12, 583);
             this.Bt_Save.Name = "Bt_Save";
             this.Bt_Save.Size = new System.Drawing.Size(667, 46);
             this.Bt_Save.TabIndex = 5;
@@ -253,7 +255,7 @@
             this.groupBox3.Controls.Add(this.label8);
             this.groupBox3.Controls.Add(this.Tb_Msg_Custom_Anon);
             this.groupBox3.Controls.Add(this.label7);
-            this.groupBox3.Location = new System.Drawing.Point(13, 335);
+            this.groupBox3.Location = new System.Drawing.Point(12, 374);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(667, 203);
             this.groupBox3.TabIndex = 6;
@@ -371,7 +373,7 @@
             // BtReset
             // 
             this.BtReset.Font = new System.Drawing.Font("Noto Sans TC", 14F);
-            this.BtReset.Location = new System.Drawing.Point(13, 596);
+            this.BtReset.Location = new System.Drawing.Point(12, 635);
             this.BtReset.Name = "BtReset";
             this.BtReset.Size = new System.Drawing.Size(667, 46);
             this.BtReset.TabIndex = 7;
@@ -434,11 +436,22 @@
             this.BtPreview_Streamlabs_Bits.UseVisualStyleBackColor = true;
             this.BtPreview_Streamlabs_Bits.Click += new System.EventHandler(this.BtPreview_Streamlabs_Bits_Click);
             // 
+            // Cb_AutoDeleteOBSOutput
+            // 
+            this.Cb_AutoDeleteOBSOutput.AutoSize = true;
+            this.Cb_AutoDeleteOBSOutput.Font = new System.Drawing.Font("Noto Sans TC", 14F);
+            this.Cb_AutoDeleteOBSOutput.Location = new System.Drawing.Point(24, 61);
+            this.Cb_AutoDeleteOBSOutput.Name = "Cb_AutoDeleteOBSOutput";
+            this.Cb_AutoDeleteOBSOutput.Size = new System.Drawing.Size(224, 31);
+            this.Cb_AutoDeleteOBSOutput.TabIndex = 3;
+            this.Cb_AutoDeleteOBSOutput.Text = "啟動程式時清空obs.txt";
+            this.Cb_AutoDeleteOBSOutput.UseVisualStyleBackColor = true;
+            // 
             // Config
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(692, 647);
+            this.ClientSize = new System.Drawing.Size(690, 693);
             this.Controls.Add(this.BtReset);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.Bt_Save);
@@ -497,5 +510,6 @@
         private System.Windows.Forms.Button BtPreview_Streamlabs_Paypal;
         private System.Windows.Forms.Button BtPreview_Streamlabs_SubGift;
         private System.Windows.Forms.Button BtPreview_Streamlabs_Bits;
+        private System.Windows.Forms.CheckBox Cb_AutoDeleteOBSOutput;
     }
 }
