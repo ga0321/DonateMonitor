@@ -39,6 +39,7 @@ namespace DonateMonitor.ServiceListener
                 _connection.OnConnected += (sender, e) =>
                 {
                     monitor.SetActiveOPay(true);
+                    monitor.AddLog("與歐富寶伺服器連線成功");
 #if DEBUG
                     Console.WriteLine("OPay OnConnected");
 #endif
@@ -48,6 +49,7 @@ namespace DonateMonitor.ServiceListener
                 _connection.OnDisconnected += (sender, reason) =>
                 {
                     monitor.SetActiveOPay(false);
+                    monitor.AddLog("與歐富寶伺服器連線中斷");
 #if DEBUG
                     Console.WriteLine($"OPay OnDisconnected: {reason}");
 #endif
@@ -57,6 +59,7 @@ namespace DonateMonitor.ServiceListener
                 _connection.OnReconnected += (sender, e) =>
                 {
                     monitor.SetActiveOPay(true);
+                    monitor.AddLog("與歐富寶伺服器重新連線成功");
 #if DEBUG
                     Console.WriteLine("OPay OnReconnected");
 #endif
@@ -65,6 +68,7 @@ namespace DonateMonitor.ServiceListener
                 // === 連線錯誤 / 發生錯誤 ===
                 _connection.OnError += (sender, error) =>
                 {
+                    monitor.AddLog("與歐富寶伺服器連線發生問題");
                     Global.WriteErrorLog(error);
                     monitor.SetActiveOPay(false);
 #if DEBUG

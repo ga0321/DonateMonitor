@@ -35,9 +35,12 @@ namespace DonateMonitor
         }
         private void InitLogPump()
         {
-            // cleanup
             string obsFileName = "obs.txt";
-            File.WriteAllText(obsFileName, "");
+            if (Global.AutoDeleteOBSOutput || !File.Exists(obsFileName))
+            {
+                // cleanup
+                File.WriteAllText(obsFileName, "");
+            }
 
             _logTimer.Interval = 50;
             _logTimer.Tick += (s, e) =>
@@ -139,6 +142,11 @@ namespace DonateMonitor
             _logQueue.Enqueue(logLine + extLogLine);
             _obsQueue.Enqueue(obsOutput);
             CsvLogger.Write(nowFull, type, name, decimal.Parse(amount), currency, extLogLine);
+        }
+        public void AddLog(string sLog)
+        {
+            var nowFull = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            _logQueue.Enqueue($"[{nowFull}] {sLog}");
         }
         public void SetActiveECPay(bool bActive)
         {

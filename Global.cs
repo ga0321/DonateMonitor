@@ -27,6 +27,7 @@ namespace DonateMonitor
         static public readonly string kCUSTOM_SUB_TIER3 = "CUSTOM_SUB_TIER3";
         static public readonly string kCUSTOM_SUB_GIFT = "CUSTOM_SUB_GIFT";
         static public readonly string kCUSTOM_BITS = "CUSTOM_BITS";
+        static public readonly string kAUTO_DELETE_OBS_OUTPUT = "AUTO_DELETE_OBS_OUTPUT";
         static public string Read(string sKey)
         {
             try
@@ -81,6 +82,7 @@ namespace DonateMonitor
             public string _sCustom_Sub_Tier3;
             public string _sCustom_Sub_Gift;
             public string _sCustom_Bits;
+            public bool _bAutoDeleteOBSOutput;
         }
         static VARS _rVARS = new VARS();
         public static VARS _VARS = new VARS();
@@ -166,6 +168,11 @@ namespace DonateMonitor
             get => Volatile.Read(ref _VARS._sCustom_Bits);
             set => Interlocked.Exchange(ref _VARS._sCustom_Bits, value);
         }
+        public static bool AutoDeleteOBSOutput
+        {
+            get => Volatile.Read(ref _VARS._bAutoDeleteOBSOutput);
+            set => Volatile.Write(ref _VARS._bAutoDeleteOBSOutput, value);
+        }
         static public void InitSettings()
         {
             _rVARS._sStreamlabsKey = null;
@@ -181,6 +188,7 @@ namespace DonateMonitor
             _rVARS._sCustom_Sub_Tier3 = "層三";
             _rVARS._sCustom_Sub_Gift = "贈訂";
             _rVARS._sCustom_Bits = "小奇點";
+            _rVARS._bAutoDeleteOBSOutput = false;
 
             _VARS = _rVARS;
         }
@@ -194,8 +202,6 @@ namespace DonateMonitor
                 else
                     OBS_OutputMode = 0;
             }
-            else
-                OBS_OutputMode = 0;
 
             sVar = Setting.Read(Setting.kSTREAMLABS_KEY);
             if (!string.IsNullOrEmpty(sVar))
@@ -244,6 +250,15 @@ namespace DonateMonitor
             sVar = Setting.Read(Setting.kCUSTOM_BITS);
             if (!string.IsNullOrEmpty(sVar))
                 Custom_Bits = sVar;
+
+            sVar = Setting.Read(Setting.kAUTO_DELETE_OBS_OUTPUT);
+            if (!string.IsNullOrEmpty(sVar))
+            {
+                if (sVar.Equals("1"))
+                    AutoDeleteOBSOutput = true;
+                else
+                    AutoDeleteOBSOutput = false;
+            }
         }
         static public void SaveSettings()
         {
@@ -259,6 +274,7 @@ namespace DonateMonitor
             Setting.Save(Setting.kCUSTOM_SUB_TIER3, Custom_Sub_Tier3);
             Setting.Save(Setting.kCUSTOM_SUB_GIFT, Custom_Sub_Gift);
             Setting.Save(Setting.kCUSTOM_BITS, Custom_Bits);
+            Setting.Save(Setting.kAUTO_DELETE_OBS_OUTPUT, AutoDeleteOBSOutput ? "1" : "0");
         }
         #endregion
         static public void WriteErrorLog(string msg)

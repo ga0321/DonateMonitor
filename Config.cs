@@ -50,6 +50,8 @@ namespace DonateMonitor
             Tb_Msg_Custom_Sub_Tier1.Text = Global.Custom_Sub_Tier1;
             Tb_Msg_Custom_Sub_Tier2.Text = Global.Custom_Sub_Tier2;
             Tb_Msg_Custom_Sub_Tier3.Text = Global.Custom_Sub_Tier3;
+            
+            Cb_AutoDeleteOBSOutput.Checked = Global.AutoDeleteOBSOutput;
         }
 
         private void SaveConfig()
@@ -70,6 +72,8 @@ namespace DonateMonitor
             Global.Custom_Sub_Tier1 = Tb_Msg_Custom_Sub_Tier1.Text;
             Global.Custom_Sub_Tier2 = Tb_Msg_Custom_Sub_Tier2.Text;
             Global.Custom_Sub_Tier3 = Tb_Msg_Custom_Sub_Tier3.Text;
+
+            Global.AutoDeleteOBSOutput = Cb_AutoDeleteOBSOutput.Checked;
         }
 
         private void SaveSettings()

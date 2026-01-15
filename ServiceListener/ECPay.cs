@@ -48,6 +48,7 @@ namespace DonateMonitor.ServiceListener
                 _connection.Closed += async (error) =>
                 {
                     monitor.SetActiveECPay(false);
+                    monitor.AddLog("與綠界伺服器連線中斷");
 #if DEBUG
                     Console.WriteLine($"ECPay closed");
 #endif
@@ -56,6 +57,7 @@ namespace DonateMonitor.ServiceListener
                 _connection.Reconnecting += (error) =>
                 {
                     monitor.SetActiveECPay(false);
+                    monitor.AddLog("嘗試重新與綠界伺服器連線中...");
 #if DEBUG
                     Console.WriteLine($"ECPay Reconnecting");
 #endif
@@ -65,6 +67,7 @@ namespace DonateMonitor.ServiceListener
                 _connection.Reconnected += (connectionId) =>
                 {
                     monitor.SetActiveECPay(true);
+                    monitor.AddLog("與綠界伺服器重新連線成功");
 #if DEBUG
                     Console.WriteLine($"ECPay Reconnected");
 #endif
@@ -76,6 +79,7 @@ namespace DonateMonitor.ServiceListener
 #if DEBUG
                 Console.WriteLine("ECPay connected");
 #endif
+                monitor.AddLog("與綠界伺服器連線成功");
                 monitor.SetActiveECPay(true);
 
                 // 🔥 關鍵：等到 token 被取消，才離開 StartAsync
