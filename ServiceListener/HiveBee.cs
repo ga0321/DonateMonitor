@@ -139,8 +139,11 @@ namespace DonateMonitor.ServiceListener
 #if DEBUG
                     Console.WriteLine($"HiveBee type={type} value={value} data={data}");
 #endif
+                    try { Global.WriteDebugLog($"[StreamLabs] {data?.ToString()}"); } catch { }
+
                     // 1 = text, 6 = video
-                    if (type.Equals("tool") && (jo.Value<string>("AlertType").Equals("1") || jo.Value<string>("AlertType").Equals("6")))
+                    var alertType = jo.Value<string>("Type"); // 測試環境是AlertType WTF
+                    if (type.Equals("tool") && (alertType.Equals("1") || alertType.Equals("6")))
                     {
                         string name = jo.Value<string>("Name") ?? "";
                         string amount = jo["Amount"]?.ToString() ?? "0";

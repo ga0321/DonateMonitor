@@ -71,6 +71,7 @@ namespace DonateMonitor
         static private string _sOPAY_ListenKey = null;
         static private string _sHiveBee_ListenKey = null;
         static private string _sStreamlabsKey = null;
+        static readonly object _logLock = new object();
         public struct VARS
         {
             public int _nOBS_OutputMode;
@@ -294,10 +295,43 @@ namespace DonateMonitor
         #endregion
         static public void WriteErrorLog(string msg)
         {
-            string path = "errors.log";
+            WriteLog("error.log", msg);
+        }
+        static public void WriteDebugLog(string msg)
+        {
+            WriteLog("debug.log", msg);
+        }
+        static private void WriteLog(string fn, string msg)
+        {
+            if (fn == null || msg == null)
+                return;
+            string path = fn;
+            const long MaxSizeBytes = 10 * 1024 * 1024; // 10 MB
+
             string line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {msg}";
 
-            File.AppendAllText(path, line + Environment.NewLine);
+            lock (_logLock)
+            {
+                try
+                {
+                    // 檔案存在且超過大小 → 清空
+                    if (File.Exists(path))
+                    {
+                        var info = new FileInfo(path);
+                        if (info.Length >= MaxSizeBytes)
+                        {
+                            // 直接清空（比刪掉再建快，也不會有 race condition）
+                            File.WriteAllText(path, string.Empty);
+                        }
+                    }
+
+                    File.AppendAllText(path, line + Environment.NewLine);
+                }
+                catch
+                {
+                    // 避免 log 本身造成程式崩潰
+                }
+            }
         }
         static public void ShowError(string sMsg, bool bWriteLog = false)
         {

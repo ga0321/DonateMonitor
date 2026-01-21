@@ -83,6 +83,7 @@ namespace DonateMonitor.ServiceListener
 #if DEBUG
                     Console.WriteLine(resp);
 #endif
+                    try { Global.WriteDebugLog($"[OPAY] {resp}"); } catch { }
                     var arr = JArray.Parse(resp);
 
                     if (!(arr[0]?["data"]?["lstDonate"] is JArray lstDonate))

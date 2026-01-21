@@ -101,6 +101,7 @@ namespace DonateMonitor.ServiceListener
 #if DEBUG
                     Console.WriteLine(raw);
 #endif
+                    try { Global.WriteDebugLog($"[StreamLabs] {raw}"); } catch { }
 
                     // ✅ 最外層是陣列：[ {type, message, ...} ]
                     var arr = JArray.Parse(raw);
@@ -152,9 +153,6 @@ namespace DonateMonitor.ServiceListener
                                         continue;
 
                                     var condition = m["condition"]?.ToString();
-                                    if (string.IsNullOrEmpty(condition))
-                                        continue;
-
                                     bool isAnon = (condition == "ANON_SUBSCRIPTION_GIFT" || condition == "MIN_ANON_SUBMYSTERYGIFT");
                                     var gifter_ac = isAnon ? Global.Custom_ANON : m["gifter"]?.ToString();
                                     var gifter_display = isAnon ? Global.Custom_ANON : m["gifter_display_name"]?.ToString();
