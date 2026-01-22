@@ -143,7 +143,7 @@ namespace DonateMonitor
         private void BtPreview_Streamlabs_Bits_Click(object sender, EventArgs e)
         {
             SaveSettings();
-            _monitor.AppendLogFromStreamlabs_Bits("test", "100", "測試小奇點訊息", true);
+            _monitor.AppendLogFromStreamlabs_Bits("test", "測試小奇點", "100", "測試小奇點訊息", true);
             RestoreSettings();
         }
 

@@ -75,9 +75,9 @@ namespace DonateMonitor
         {
             AppendLog(2, name, amount, msg, currency, null, isPreview);
         }
-        public void AppendLogFromStreamlabs_Bits(string acc, string amount, string msg, bool isPreview = false)
+        public void AppendLogFromStreamlabs_Bits(string acc, string name, string amount, string msg, bool isPreview = false)
         {
-            AppendLog(3, acc, amount, msg, Global.Custom_Bits, null, isPreview);
+            AppendLog(3, name, amount, msg, Global.Custom_Bits, null, isPreview, acc);
         }
         public void AppendLogFromStreamlabs_SubGift(string acc, string amount, string displayName, string subplan, bool isPreview = false)
         {
@@ -87,7 +87,7 @@ namespace DonateMonitor
         {
             AppendLog(5, name, amount, msg, "TWD", null, isPreview);
         }
-        private void AppendLog(int nType, string name, string amount, string msg, string currency = "TWD", string subplan = null, bool isPreview = false)
+        private void AppendLog(int nType, string name, string amount, string msg, string currency = "TWD", string subplan = null, bool isPreview = false, string acc = null)
         {
             if (string.IsNullOrEmpty(msg))
                 msg = "";
@@ -110,6 +110,8 @@ namespace DonateMonitor
             {
                 type = Global.Custom_Bits;
                 obsMsg = Global.Streamlabs_Bits_OBS_Msg;
+                if (!string.IsNullOrEmpty(acc))
+                    msg += $"(帳號: {acc})";
             }
             else if (nType == 2)
             {

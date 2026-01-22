@@ -136,9 +136,10 @@ namespace DonateMonitor.ServiceListener
                                 foreach (var m in msgs)
                                 {
                                     var from = m["name"]?.ToString();
+                                    var displayName = m["display_name"]?.ToString() ?? from;
                                     var amount = m["amount"]?.ToString();
                                     var msg = m["message"]?.ToString();
-                                    monitor.AppendLogFromStreamlabs_Bits(from, amount, msg);
+                                    monitor.AppendLogFromStreamlabs_Bits(from, displayName, amount, msg);
                                 }
                             }
                         }
@@ -156,6 +157,11 @@ namespace DonateMonitor.ServiceListener
                                     bool isAnon = (condition == "ANON_SUBSCRIPTION_GIFT" || condition == "MIN_ANON_SUBMYSTERYGIFT");
                                     var gifter_ac = isAnon ? Global.Custom_ANON : m["gifter"]?.ToString();
                                     var gifter_display = isAnon ? Global.Custom_ANON : m["gifter_display_name"]?.ToString();
+                                    if (gifter_ac.Equals("Anonymous"))
+                                    {
+                                        gifter_ac = Global.Custom_ANON;
+                                        gifter_display = Global.Custom_ANON;
+                                    }
                                     var sub_plan = m["sub_plan"]?.ToString();
 
                                     if (subType == "subgift")
