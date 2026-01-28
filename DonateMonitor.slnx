@@ -1,3 +1,9 @@
 <Solution>
-  <Project Path="DonateMonitor.csproj" Id="23bf52bc-c93b-43fd-a2af-0afd0b1159ce" />
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="DonateMonitor.csproj" Id="23bf52bc-c93b-43fd-a2af-0afd0b1159ce">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
 </Solution>
