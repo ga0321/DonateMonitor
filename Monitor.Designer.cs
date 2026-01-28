@@ -34,6 +34,7 @@
             this.lbOPAY_Status = new System.Windows.Forms.Label();
             this.lbStreamlabs_Status = new System.Windows.Forms.Label();
             this.lbHiveBee_Status = new System.Windows.Forms.Label();
+            this.BtClearDonateDB = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lbECPAY_Status
@@ -42,7 +43,7 @@
             this.lbECPAY_Status.Font = new System.Drawing.Font("Noto Sans TC", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.lbECPAY_Status.Location = new System.Drawing.Point(12, 9);
             this.lbECPAY_Status.Name = "lbECPAY_Status";
-            this.lbECPAY_Status.Size = new System.Drawing.Size(145, 27);
+            this.lbECPAY_Status.Size = new System.Drawing.Size(176, 34);
             this.lbECPAY_Status.TabIndex = 1;
             this.lbECPAY_Status.Text = "綠界狀態：無效";
             // 
@@ -76,7 +77,7 @@
             this.lbOPAY_Status.Font = new System.Drawing.Font("Noto Sans TC", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.lbOPAY_Status.Location = new System.Drawing.Point(12, 36);
             this.lbOPAY_Status.Name = "lbOPAY_Status";
-            this.lbOPAY_Status.Size = new System.Drawing.Size(164, 27);
+            this.lbOPAY_Status.Size = new System.Drawing.Size(199, 34);
             this.lbOPAY_Status.TabIndex = 4;
             this.lbOPAY_Status.Text = "歐富寶狀態：無效";
             // 
@@ -86,7 +87,7 @@
             this.lbStreamlabs_Status.Font = new System.Drawing.Font("Noto Sans TC", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.lbStreamlabs_Status.Location = new System.Drawing.Point(12, 90);
             this.lbStreamlabs_Status.Name = "lbStreamlabs_Status";
-            this.lbStreamlabs_Status.Size = new System.Drawing.Size(213, 27);
+            this.lbStreamlabs_Status.Size = new System.Drawing.Size(258, 34);
             this.lbStreamlabs_Status.TabIndex = 5;
             this.lbStreamlabs_Status.Text = "Streamlabs 狀態：無效";
             // 
@@ -96,15 +97,27 @@
             this.lbHiveBee_Status.Font = new System.Drawing.Font("Noto Sans TC", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.lbHiveBee_Status.Location = new System.Drawing.Point(12, 63);
             this.lbHiveBee_Status.Name = "lbHiveBee_Status";
-            this.lbHiveBee_Status.Size = new System.Drawing.Size(185, 27);
+            this.lbHiveBee_Status.Size = new System.Drawing.Size(224, 34);
             this.lbHiveBee_Status.TabIndex = 6;
             this.lbHiveBee_Status.Text = "HiveBee 狀態：無效";
             // 
+            // BtClearDonateDB
+            // 
+            this.BtClearDonateDB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.BtClearDonateDB.Location = new System.Drawing.Point(740, 8);
+            this.BtClearDonateDB.Name = "BtClearDonateDB";
+            this.BtClearDonateDB.Size = new System.Drawing.Size(112, 33);
+            this.BtClearDonateDB.TabIndex = 7;
+            this.BtClearDonateDB.Text = "清除所有累計";
+            this.BtClearDonateDB.UseVisualStyleBackColor = true;
+            this.BtClearDonateDB.Click += new System.EventHandler(this.BtClearDonateDB_Click);
+            // 
             // Monitor
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 21F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(945, 692);
+            this.Controls.Add(this.BtClearDonateDB);
             this.Controls.Add(this.lbHiveBee_Status);
             this.Controls.Add(this.lbStreamlabs_Status);
             this.Controls.Add(this.lbOPAY_Status);
@@ -131,5 +144,6 @@
         private System.Windows.Forms.Label lbOPAY_Status;
         private System.Windows.Forms.Label lbStreamlabs_Status;
         private System.Windows.Forms.Label lbHiveBee_Status;
+        private System.Windows.Forms.Button BtClearDonateDB;
     }
 }

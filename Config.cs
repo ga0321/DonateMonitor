@@ -45,14 +45,16 @@ namespace DonateMonitor
             Tb_Msg_Streamlabs_Paypal_Msg.Text = Global.Streamlabs_Paypal_OBS_Msg;
             Tb_Msg_Streamlabs_SubGift_Msg.Text = Global.Streamlabs_SubGift_OBS_Msg;
             Tb_Msg_Streamlabs_Bits_Msg.Text = Global.Streamlabs_Bits_OBS_Msg;
+            Tb_Msg_Streamlabs_Sub_Msg.Text = Global.Streamlabs_Sub_OBS_Msg;
+            Tb_Msg_Streamlabs_Resub_Msg.Text = Global.Streamlabs_Resub_OBS_Msg;
             Tb_Msg_Custom_Anon.Text = Global.Custom_ANON;
             Tb_Msg_Custom_Sub_Gift.Text = Global.Custom_Sub_Gift;
             Tb_Msg_Custom_Bits.Text = Global.Custom_Bits;
             Tb_Msg_Custom_Sub_Tier1.Text = Global.Custom_Sub_Tier1;
             Tb_Msg_Custom_Sub_Tier2.Text = Global.Custom_Sub_Tier2;
             Tb_Msg_Custom_Sub_Tier3.Text = Global.Custom_Sub_Tier3;
-            
-            Cb_AutoDeleteOBSOutput.Checked = Global.AutoDeleteOBSOutput;
+            Cb_EnableSubOutput.Checked = Global.EnableSubOutput;
+            Cb_EnableResubOutput.Checked = Global.EnableResubOutput;
         }
 
         private void SaveConfig()
@@ -68,14 +70,16 @@ namespace DonateMonitor
             Global.Streamlabs_Paypal_OBS_Msg = Tb_Msg_Streamlabs_Paypal_Msg.Text;
             Global.Streamlabs_SubGift_OBS_Msg = Tb_Msg_Streamlabs_SubGift_Msg.Text;
             Global.Streamlabs_Bits_OBS_Msg = Tb_Msg_Streamlabs_Bits_Msg.Text;
+            Global.Streamlabs_Sub_OBS_Msg = Tb_Msg_Streamlabs_Sub_Msg.Text;
+            Global.Streamlabs_Resub_OBS_Msg = Tb_Msg_Streamlabs_Resub_Msg.Text;
             Global.Custom_ANON = Tb_Msg_Custom_Anon.Text;
             Global.Custom_Sub_Gift = Tb_Msg_Custom_Sub_Gift.Text;
             Global.Custom_Bits = Tb_Msg_Custom_Bits.Text;
             Global.Custom_Sub_Tier1 = Tb_Msg_Custom_Sub_Tier1.Text;
             Global.Custom_Sub_Tier2 = Tb_Msg_Custom_Sub_Tier2.Text;
             Global.Custom_Sub_Tier3 = Tb_Msg_Custom_Sub_Tier3.Text;
-
-            Global.AutoDeleteOBSOutput = Cb_AutoDeleteOBSOutput.Checked;
+            Global.EnableSubOutput = Cb_EnableSubOutput.Checked;
+            Global.EnableResubOutput = Cb_EnableResubOutput.Checked;
         }
 
         private void SaveSettings()
@@ -151,6 +155,20 @@ namespace DonateMonitor
         {
             SaveSettings();
             _monitor.AppendLogFromHiveBee("測試HiveBee", "100", "測試HiveBee訊息", true);
+            RestoreSettings();
+        }
+
+        private void BtPreview_Streamlabs_Sub_Click(object sender, EventArgs e)
+        {
+            SaveSettings();
+            _monitor.AppendLogFromStreamlabs_Sub("test", "測試新訂閱", "1", Streamlabs.SubPlanToText("1000"), true);
+            RestoreSettings();
+        }
+
+        private void BtPreview_Streamlabs_Resub_Click(object sender, EventArgs e)
+        {
+            SaveSettings();
+            _monitor.AppendLogFromStreamlabs_Resub("test", "測試續訂", "12", Streamlabs.SubPlanToText("1000"), true);
             RestoreSettings();
         }
     }

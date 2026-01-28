@@ -23,13 +23,16 @@ namespace DonateMonitor
         static public readonly string kOBS_STREAMLABS_PAYPAL_OUTPUT_MSG = "OBS_STREAMLABS_PAYPAL_OUTPUT_MSG";
         static public readonly string kOBS_STREAMLABS_BITS_OUTPUT_MSG = "OBS_STREAMLABS_BITS_OUTPUT_MSG";
         static public readonly string kOBS_STREAMLABS_SUBGIFT_OUTPUT_MSG = "OBS_STREAMLABS_SUB_GIFT_OUTPUT_MSG";
+        static public readonly string kOBS_STREAMLABS_RESUB_OUTPUT_MSG = "OBS_STREAMLABS_RESUB_OUTPUT_MSG";
+        static public readonly string kOBS_STREAMLABS_SUB_OUTPUT_MSG = "OBS_STREAMLABS_SUB_OUTPUT_MSG";
         static public readonly string kCUSTOM_ANON = "CUSTOM_ANON";
         static public readonly string kCUSTOM_SUB_TIER1 = "CUSTOM_SUB_TIER1";
         static public readonly string kCUSTOM_SUB_TIER2 = "CUSTOM_SUB_TIER2";
         static public readonly string kCUSTOM_SUB_TIER3 = "CUSTOM_SUB_TIER3";
         static public readonly string kCUSTOM_SUB_GIFT = "CUSTOM_SUB_GIFT";
         static public readonly string kCUSTOM_BITS = "CUSTOM_BITS";
-        static public readonly string kAUTO_DELETE_OBS_OUTPUT = "AUTO_DELETE_OBS_OUTPUT";
+        static public readonly string kENABLE_SUB_OUTPUT = "ENABLE_SUB_OUTPUT";
+        static public readonly string kENABLE_RESUB_OUTPUT = "ENABLE_RESUB_OUTPUT";
         static public string Read(string sKey)
         {
             try
@@ -65,6 +68,14 @@ namespace DonateMonitor
     }
     static class Global
     {
+        // Type 常數
+        public static readonly string Type_ECPay = "綠界";
+        public static readonly string Type_OPay = "歐富寶";
+        public static readonly string Type_HiveBee = "HiveBee";
+        public static readonly string Type_Paypal = "Paypal(Streamlabs)";
+        public static readonly string Type_Sub = "新訂閱";
+        public static readonly string Type_Resub = "續訂";
+
         static public bool _bExit = false;
         static private string _sECPAY_LoginToken = null;
         static private string _sECPAY_ListenKey = null;
@@ -81,13 +92,16 @@ namespace DonateMonitor
             public string _sStreamlabs_Paypal_OBS_Msg;
             public string _sStreamlabs_Bits_OBS_Msg;
             public string _sStreamlabs_SubGift_OBS_Msg;
+            public string _sStreamlabs_Resub_OBS_Msg;
+            public string _sStreamlabs_Sub_OBS_Msg;
             public string _sCustom_ANON;
             public string _sCustom_Sub_Tier1;
             public string _sCustom_Sub_Tier2;
             public string _sCustom_Sub_Tier3;
             public string _sCustom_Sub_Gift;
             public string _sCustom_Bits;
-            public bool _bAutoDeleteOBSOutput;
+            public bool _bEnableSubOutput;
+            public bool _bEnableResubOutput;
         }
         static VARS _rVARS = new VARS();
         public static VARS _VARS = new VARS();
@@ -153,6 +167,16 @@ namespace DonateMonitor
             get => Volatile.Read(ref _VARS._sStreamlabs_SubGift_OBS_Msg);
             set => Interlocked.Exchange(ref _VARS._sStreamlabs_SubGift_OBS_Msg, value);
         }
+        public static string Streamlabs_Resub_OBS_Msg
+        {
+            get => Volatile.Read(ref _VARS._sStreamlabs_Resub_OBS_Msg);
+            set => Interlocked.Exchange(ref _VARS._sStreamlabs_Resub_OBS_Msg, value);
+        }
+        public static string Streamlabs_Sub_OBS_Msg
+        {
+            get => Volatile.Read(ref _VARS._sStreamlabs_Sub_OBS_Msg);
+            set => Interlocked.Exchange(ref _VARS._sStreamlabs_Sub_OBS_Msg, value);
+        }
         public static string Custom_ANON
         {
             get => Volatile.Read(ref _VARS._sCustom_ANON);
@@ -183,10 +207,15 @@ namespace DonateMonitor
             get => Volatile.Read(ref _VARS._sCustom_Bits);
             set => Interlocked.Exchange(ref _VARS._sCustom_Bits, value);
         }
-        public static bool AutoDeleteOBSOutput
+        public static bool EnableSubOutput
         {
-            get => Volatile.Read(ref _VARS._bAutoDeleteOBSOutput);
-            set => Volatile.Write(ref _VARS._bAutoDeleteOBSOutput, value);
+            get => Volatile.Read(ref _VARS._bEnableSubOutput);
+            set => Volatile.Write(ref _VARS._bEnableSubOutput, value);
+        }
+        public static bool EnableResubOutput
+        {
+            get => Volatile.Read(ref _VARS._bEnableResubOutput);
+            set => Volatile.Write(ref _VARS._bEnableResubOutput, value);
         }
         static public void InitSettings()
         {
@@ -197,13 +226,16 @@ namespace DonateMonitor
             _rVARS._sStreamlabs_Paypal_OBS_Msg = "{0}: {1}{2}";
             _rVARS._sStreamlabs_Bits_OBS_Msg = "{0}: {1}{2}";
             _rVARS._sStreamlabs_SubGift_OBS_Msg = "{0}: {1}{2}({3})";
+            _rVARS._sStreamlabs_Resub_OBS_Msg = "{0} 續訂{1}個月({2})";
+            _rVARS._sStreamlabs_Sub_OBS_Msg = "{0} 新訂閱{1}個月({2})";
             _rVARS._sCustom_ANON = "匿名";
             _rVARS._sCustom_Sub_Tier1 = "層一";
             _rVARS._sCustom_Sub_Tier2 = "層二";
             _rVARS._sCustom_Sub_Tier3 = "層三";
             _rVARS._sCustom_Sub_Gift = "贈訂";
             _rVARS._sCustom_Bits = "小奇點";
-            _rVARS._bAutoDeleteOBSOutput = false;
+            _rVARS._bEnableSubOutput = true;
+            _rVARS._bEnableResubOutput = true;
 
             _VARS = _rVARS;
         }
@@ -242,6 +274,14 @@ namespace DonateMonitor
             if (!string.IsNullOrEmpty(sVar))
                 Streamlabs_SubGift_OBS_Msg = sVar;
 
+            sVar = Setting.Read(Setting.kOBS_STREAMLABS_RESUB_OUTPUT_MSG);
+            if (!string.IsNullOrEmpty(sVar))
+                Streamlabs_Resub_OBS_Msg = sVar;
+
+            sVar = Setting.Read(Setting.kOBS_STREAMLABS_SUB_OUTPUT_MSG);
+            if (!string.IsNullOrEmpty(sVar))
+                Streamlabs_Sub_OBS_Msg = sVar;
+
             sVar = Setting.Read(Setting.kCUSTOM_ANON);
             if (!string.IsNullOrEmpty(sVar))
                 Custom_ANON = sVar;
@@ -266,14 +306,13 @@ namespace DonateMonitor
             if (!string.IsNullOrEmpty(sVar))
                 Custom_Bits = sVar;
 
-            sVar = Setting.Read(Setting.kAUTO_DELETE_OBS_OUTPUT);
+            sVar = Setting.Read(Setting.kENABLE_SUB_OUTPUT);
             if (!string.IsNullOrEmpty(sVar))
-            {
-                if (sVar.Equals("1"))
-                    AutoDeleteOBSOutput = true;
-                else
-                    AutoDeleteOBSOutput = false;
-            }
+                EnableSubOutput = sVar.Equals("1");
+
+            sVar = Setting.Read(Setting.kENABLE_RESUB_OUTPUT);
+            if (!string.IsNullOrEmpty(sVar))
+                EnableResubOutput = sVar.Equals("1");
         }
         static public void SaveSettings()
         {
@@ -284,13 +323,16 @@ namespace DonateMonitor
             Setting.Save(Setting.kOBS_STREAMLABS_PAYPAL_OUTPUT_MSG, Streamlabs_Paypal_OBS_Msg);
             Setting.Save(Setting.kOBS_STREAMLABS_BITS_OUTPUT_MSG, Streamlabs_Bits_OBS_Msg);
             Setting.Save(Setting.kOBS_STREAMLABS_SUBGIFT_OUTPUT_MSG, Streamlabs_SubGift_OBS_Msg);
+            Setting.Save(Setting.kOBS_STREAMLABS_RESUB_OUTPUT_MSG, Streamlabs_Resub_OBS_Msg);
+            Setting.Save(Setting.kOBS_STREAMLABS_SUB_OUTPUT_MSG, Streamlabs_Sub_OBS_Msg);
             Setting.Save(Setting.kCUSTOM_ANON, Custom_ANON);
             Setting.Save(Setting.kCUSTOM_SUB_TIER1, Custom_Sub_Tier1);
             Setting.Save(Setting.kCUSTOM_SUB_TIER2, Custom_Sub_Tier2);
             Setting.Save(Setting.kCUSTOM_SUB_TIER3, Custom_Sub_Tier3);
             Setting.Save(Setting.kCUSTOM_SUB_GIFT, Custom_Sub_Gift);
             Setting.Save(Setting.kCUSTOM_BITS, Custom_Bits);
-            Setting.Save(Setting.kAUTO_DELETE_OBS_OUTPUT, AutoDeleteOBSOutput ? "1" : "0");
+            Setting.Save(Setting.kENABLE_SUB_OUTPUT, EnableSubOutput ? "1" : "0");
+            Setting.Save(Setting.kENABLE_RESUB_OUTPUT, EnableResubOutput ? "1" : "0");
         }
         #endregion
         static public void WriteErrorLog(string msg)

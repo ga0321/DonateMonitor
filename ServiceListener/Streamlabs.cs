@@ -149,40 +149,52 @@ namespace DonateMonitor.ServiceListener
                             {
                                 foreach (var m in msgs)
                                 {
-                                    var subType = m["sub_type"]?.ToString();
-                                    if (string.IsNullOrEmpty(subType) || !subType.ToLower().Equals("subgift"))
+                                    var subType = m["sub_type"]?.ToString()?.ToLower();
+                                    if (string.IsNullOrEmpty(subType))
                                         continue;
-                                    var condition = m["condition"]?.ToString();
-                                    bool isAnon = (condition == "ANON_SUBSCRIPTION_GIFT" || condition == "MIN_ANON_SUBMYSTERYGIFT");
-                                    var gifter_ac = isAnon ? Global.Custom_ANON : m["gifter"]?.ToString();
-                                    var gifter_display = isAnon ? Global.Custom_ANON : m["gifter_display_name"]?.ToString();
-                                    if (gifter_ac.ToLower().Equals("anonymous"))
-                                    {
-                                        gifter_ac = Global.Custom_ANON;
-                                        gifter_display = Global.Custom_ANON;
-                                    }
+
                                     var sub_plan = m["sub_plan"]?.ToString();
 
-                                    if (subType.ToLower().Equals("subgift"))
+                                    if (subType.Equals("subgift"))
                                     {
-                                        
+                                        var condition = m["condition"]?.ToString();
+                                        bool isAnon = (condition == "ANON_SUBSCRIPTION_GIFT" || condition == "MIN_ANON_SUBMYSTERYGIFT");
+                                        var gifter_ac = isAnon ? Global.Custom_ANON : m["gifter"]?.ToString();
+                                        var gifter_display = isAnon ? Global.Custom_ANON : m["gifter_display_name"]?.ToString();
+                                        if (gifter_ac?.ToLower().Equals("anonymous") == true)
+                                        {
+                                            gifter_ac = Global.Custom_ANON;
+                                            gifter_display = Global.Custom_ANON;
+                                        }
                                         var amount = m["months"]?.ToString();
 #if DEBUG
                                         gifter_ac += "(gifter_ac)";
                                         gifter_display += "(gifter_display)";
 #endif
-
                                         monitor.AppendLogFromStreamlabs_SubGift(gifter_ac, amount, gifter_display, SubPlanToText(sub_plan));
                                     }
-                                    /*else if (subType.ToLower().Equals("submysterygift"))
+                                    else if (subType.Equals("resub"))
                                     {
-                                        var amount = m["amount"]?.ToString();
+                                        var subscriber_name = m["name"]?.ToString();
+                                        var subscriber_display = m["display_name"]?.ToString() ?? subscriber_name;
+                                        var months = m["months"]?.ToString();
 #if DEBUG
-                                        gifter_ac += "(gifter_ac)";
-                                        gifter_display += "(gifter_display)";
+                                        subscriber_name += "(name)";
+                                        subscriber_display += "(display)";
 #endif
-                                        monitor.AppendLogFromStreamlabs_SubGift(gifter_ac, amount, gifter_display, SubPlanToText(sub_plan));
-                                    }*/
+                                        monitor.AppendLogFromStreamlabs_Resub(subscriber_name, subscriber_display, months, SubPlanToText(sub_plan));
+                                    }
+                                    else if (subType.Equals("sub"))
+                                    {
+                                        var subscriber_name = m["name"]?.ToString();
+                                        var subscriber_display = m["display_name"]?.ToString() ?? subscriber_name;
+                                        var months = m["months"]?.ToString();
+#if DEBUG
+                                        subscriber_name += "(name)";
+                                        subscriber_display += "(display)";
+#endif
+                                        monitor.AppendLogFromStreamlabs_Sub(subscriber_name, subscriber_display, months, SubPlanToText(sub_plan));
+                                    }
                                 }
                             }
                         }
