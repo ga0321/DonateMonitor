@@ -201,7 +201,7 @@ namespace DonateMonitor.ServiceListener
             }
             catch (Exception ex)
             {
-                Global.ShowError($"啟動Streamlabs服務失敗: {ex.Message}", true);
+                monitor.AddLog($"啟動Streamlabs服務失敗: {ex.Message}");
             }
         }
 

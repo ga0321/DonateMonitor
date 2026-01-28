@@ -55,7 +55,7 @@ namespace DonateMonitor.ServiceListener
                 }
                 catch (Exception ex)
                 {
-                    Global.ShowError($"HiveBee服務啟動失敗: {ex.Message}");
+                    monitor.AddLog($"HiveBee服務啟動失敗: {ex.Message}");
                     var delay = ComputeBackoff(attempt);
                     await Task.Delay(delay, ct).ConfigureAwait(false);
                 }
