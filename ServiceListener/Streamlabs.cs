@@ -143,16 +143,15 @@ namespace DonateMonitor.ServiceListener
                                 }
                             }
                         }
-                        else if (/*type == "subscription" || */type.ToLower().Equals("submysterygift"))
+                        else if (type.ToLower().Equals("subscription")) // type.ToLower().Equals("submysterygift")
                         {
                             if (ev["message"] is JArray msgs)
                             {
                                 foreach (var m in msgs)
                                 {
                                     var subType = m["sub_type"]?.ToString();
-                                    if (string.IsNullOrEmpty(subType))
+                                    if (string.IsNullOrEmpty(subType) || !subType.ToLower().Equals("subgift"))
                                         continue;
-
                                     var condition = m["condition"]?.ToString();
                                     bool isAnon = (condition == "ANON_SUBSCRIPTION_GIFT" || condition == "MIN_ANON_SUBMYSTERYGIFT");
                                     var gifter_ac = isAnon ? Global.Custom_ANON : m["gifter"]?.ToString();
@@ -175,7 +174,7 @@ namespace DonateMonitor.ServiceListener
 
                                         monitor.AppendLogFromStreamlabs_SubGift(gifter_ac, amount, gifter_display, SubPlanToText(sub_plan));
                                     }
-                                    else if (subType.ToLower().Equals("submysterygift"))
+                                    /*else if (subType.ToLower().Equals("submysterygift"))
                                     {
                                         var amount = m["amount"]?.ToString();
 #if DEBUG
@@ -183,7 +182,7 @@ namespace DonateMonitor.ServiceListener
                                         gifter_display += "(gifter_display)";
 #endif
                                         monitor.AppendLogFromStreamlabs_SubGift(gifter_ac, amount, gifter_display, SubPlanToText(sub_plan));
-                                    }
+                                    }*/
                                 }
                             }
                         }
