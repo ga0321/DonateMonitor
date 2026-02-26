@@ -8,7 +8,7 @@ namespace DonateMonitor
     public static class DonateDB
     {
         private static readonly string DbPath = "donate.db";
-        private static readonly string ConnectionString = $"Data Source={DbPath};Version=3;";
+        private static readonly string ConnectionString = $"Data Source={DbPath};Version=3;Busy Timeout=60000;";
 
         static DonateDB()
         {
@@ -101,29 +101,64 @@ namespace DonateMonitor
         }
 
         /// <summary>
-        /// 獲取指定帳號的贈訂累計數量
+        /// 累計贈訂記錄：同一 Account+SubPlan 只保留一筆，Amount 累加。
+        /// 回傳累計後的總數量。
         /// </summary>
-        public static int GetSubGiftCount(string account)
-        {
-            return (int)GetTotalAmount(account, Global.Custom_Sub_Gift);
-        }
-
-        /// <summary>
-        /// 獲取指定帳號和層級的贈訂累計數量
-        /// </summary>
-        public static int GetSubGiftCountByPlan(string account, string subPlan)
+        public static int AccumulateSubGift(
+            string datetime,
+            string account,
+            string displayName,
+            int amount,
+            string subPlan)
         {
             using (var conn = new SQLiteConnection(ConnectionString))
             {
                 conn.Open();
-                string sql = "SELECT COALESCE(SUM(Amount), 0) FROM DonateLog WHERE Account = @account AND Type = @type AND SubPlan = @subPlan";
-                using (var cmd = new SQLiteCommand(sql, conn))
+                using (var transaction = conn.BeginTransaction())
                 {
-                    cmd.Parameters.AddWithValue("@account", account);
-                    cmd.Parameters.AddWithValue("@type", Global.Custom_Sub_Gift);
-                    cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
-                    var result = cmd.ExecuteScalar();
-                    return Convert.ToInt32(result);
+                    string type = Global.Custom_Sub_Gift;
+
+                    // 取得目前累計
+                    int currentTotal = 0;
+                    string sumSql = "SELECT COALESCE(SUM(Amount), 0) FROM DonateLog WHERE Account = @account AND Type = @type AND SubPlan = @subPlan";
+                    using (var cmd = new SQLiteCommand(sumSql, conn, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@account", account ?? "");
+                        cmd.Parameters.AddWithValue("@type", type);
+                        cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
+                        currentTotal = Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+
+                    // 刪除舊的行（可能有多筆歷史資料）
+                    string deleteSql = "DELETE FROM DonateLog WHERE Account = @account AND Type = @type AND SubPlan = @subPlan";
+                    using (var cmd = new SQLiteCommand(deleteSql, conn, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@account", account ?? "");
+                        cmd.Parameters.AddWithValue("@type", type);
+                        cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // 寫入合併後的單筆記錄
+                    int newTotal = currentTotal + amount;
+                    string insertSql = @"
+                        INSERT INTO DonateLog (DateTime, Type, Account, DisplayName, Amount, Currency, Message, SubPlan)
+                        VALUES (@datetime, @type, @account, @displayName, @amount, @currency, @message, @subPlan)";
+                    using (var cmd = new SQLiteCommand(insertSql, conn, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@datetime", datetime);
+                        cmd.Parameters.AddWithValue("@type", type);
+                        cmd.Parameters.AddWithValue("@account", account ?? "");
+                        cmd.Parameters.AddWithValue("@displayName", displayName ?? "");
+                        cmd.Parameters.AddWithValue("@amount", newTotal);
+                        cmd.Parameters.AddWithValue("@currency", type);
+                        cmd.Parameters.AddWithValue("@message", "");
+                        cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    transaction.Commit();
+                    return newTotal;
                 }
             }
         }

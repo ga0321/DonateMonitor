@@ -203,15 +203,26 @@ namespace DonateMonitor
             int.TryParse(amount, out giftAmount);
             if (giftAmount <= 0) giftAmount = 1;
 
-            // 預覽時不寫入 DB
+            int totalCount;
             if (!isPreview)
             {
                 var nowFull = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                DonateDB.Write(nowFull, Global.Custom_Sub_Gift, acc, displayName, giftAmount, Global.Custom_Sub_Gift, "", subplan);
+                if (subplan == Global.Custom_Sub_Tier1)
+                {
+                    // 層一：累計合併為單筆記錄
+                    totalCount = DonateDB.AccumulateSubGift(nowFull, acc, displayName, giftAmount, subplan);
+                }
+                else
+                {
+                    // 層二、層三：逐筆寫入
+                    DonateDB.Write(nowFull, Global.Custom_Sub_Gift, acc, displayName, giftAmount, Global.Custom_Sub_Gift, "", subplan);
+                    totalCount = giftAmount;
+                }
             }
-
-            // 從 DB 計算該帳號+層級的累計數量
-            int totalCount = isPreview ? giftAmount : DonateDB.GetSubGiftCountByPlan(acc, subplan);
+            else
+            {
+                totalCount = giftAmount;
+            }
 
             // 使用累計後的數量輸出
             AppendLog(4, acc, totalCount.ToString(), displayName, Global.Custom_Sub_Gift, subplan, isPreview);

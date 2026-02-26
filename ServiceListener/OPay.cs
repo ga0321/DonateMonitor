@@ -84,19 +84,36 @@ namespace DonateMonitor.ServiceListener
                     Console.WriteLine(resp);
 #endif
                     try { Global.WriteDebugLog($"[OPAY] {resp}"); } catch { }
-                    var arr = JArray.Parse(resp);
+
+                    JArray arr;
+                    try
+                    {
+                        arr = JArray.Parse(resp);
+                    }
+                    catch (Exception ex)
+                    {
+                        Global.WriteErrorLog($"[OPay] JSON parse failed: {ex.Message}");
+                        return;
+                    }
 
                     if (!(arr[0]?["data"]?["lstDonate"] is JArray lstDonate))
                         return;
 
                     foreach (var d in lstDonate)
                     {
-                        //string donateid = d["donateid"]?.ToString();
-                        string name = d["name"]?.ToString();
-                        string amount = d["amount"]?.ToString();
-                        string msg = d["msg"]?.ToString();
+                        try
+                        {
+                            //string donateid = d["donateid"]?.ToString();
+                            string name = d["name"]?.ToString();
+                            string amount = d["amount"]?.ToString();
+                            string msg = d["msg"]?.ToString();
 
-                        monitor.AppendLogFromOPay(name, amount, msg);
+                            monitor.AppendLogFromOPay(name, amount, msg);
+                        }
+                        catch (Exception ex)
+                        {
+                            Global.WriteErrorLog($"[OPay] event handle error: {ex}");
+                        }
                     }
                 });
 

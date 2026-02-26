@@ -103,100 +103,115 @@ namespace DonateMonitor.ServiceListener
 #endif
                     try { Global.WriteDebugLog($"[StreamLabs] {raw}"); } catch { }
 
-                    // ✅ 最外層是陣列：[ {type, message, ...} ]
-                    var arr = JArray.Parse(raw);
+                    JArray arr;
+                    try
+                    {
+                        arr = JArray.Parse(raw);
+                    }
+                    catch (Exception ex)
+                    {
+                        Global.WriteErrorLog($"[Streamlabs] JSON parse failed: {ex.Message}");
+                        return;
+                    }
 
                     foreach (var ev in arr)
                     {
-                        var type = ev["type"]?.ToString();
+                        try
+                        {
+                            var type = ev["type"]?.ToString();
 #if DEBUG
-                        Console.WriteLine($"type={type}");
+                            Console.WriteLine($"type={type}");
 #endif
 
-                        if (type == "donation")
-                        {
-                            if (ev["message"] is JArray msgs)
+                            if (type == "donation")
                             {
-                                foreach (var m in msgs)
+                                if (ev["message"] is JArray msgs)
                                 {
-                                    var from = m["from"]?.ToString();
-                                    var amount = m["amount"]?.ToString();
-                                    //var formatted = m["formattedAmount"]?.ToString();
-                                    var msg = m["message"]?.ToString();
-                                    var currency = m["currency"]?.ToString();
-
-                                    monitor.AppendLogFromStreamlabs_Paypal(from, amount, currency, msg);
-                                }
-                            }
-                        }
-                        else if (type == "bits")
-                        {
-                            if (ev["message"] is JArray msgs)
-                            {
-                                foreach (var m in msgs)
-                                {
-                                    var from = m["name"]?.ToString();
-                                    var displayName = m["display_name"]?.ToString() ?? from;
-                                    var amount = m["amount"]?.ToString();
-                                    var msg = m["message"]?.ToString();
-                                    monitor.AppendLogFromStreamlabs_Bits(from, displayName, amount, msg);
-                                }
-                            }
-                        }
-                        else if (type.ToLower().Equals("subscription")) // type.ToLower().Equals("submysterygift")
-                        {
-                            if (ev["message"] is JArray msgs)
-                            {
-                                foreach (var m in msgs)
-                                {
-                                    var subType = m["sub_type"]?.ToString()?.ToLower();
-                                    if (string.IsNullOrEmpty(subType))
-                                        continue;
-
-                                    var sub_plan = m["sub_plan"]?.ToString();
-
-                                    if (subType.Equals("subgift"))
+                                    foreach (var m in msgs)
                                     {
-                                        var condition = m["condition"]?.ToString();
-                                        bool isAnon = (condition == "ANON_SUBSCRIPTION_GIFT" || condition == "MIN_ANON_SUBMYSTERYGIFT");
-                                        var gifter_ac = isAnon ? Global.Custom_ANON : m["gifter"]?.ToString();
-                                        var gifter_display = isAnon ? Global.Custom_ANON : m["gifter_display_name"]?.ToString();
-                                        if (gifter_ac?.ToLower().Equals("anonymous") == true)
+                                        var from = m["from"]?.ToString();
+                                        var amount = m["amount"]?.ToString();
+                                        //var formatted = m["formattedAmount"]?.ToString();
+                                        var msg = m["message"]?.ToString();
+                                        var currency = m["currency"]?.ToString();
+
+                                        monitor.AppendLogFromStreamlabs_Paypal(from, amount, currency, msg);
+                                    }
+                                }
+                            }
+                            else if (type == "bits")
+                            {
+                                if (ev["message"] is JArray msgs)
+                                {
+                                    foreach (var m in msgs)
+                                    {
+                                        var from = m["name"]?.ToString();
+                                        var displayName = m["display_name"]?.ToString() ?? from;
+                                        var amount = m["amount"]?.ToString();
+                                        var msg = m["message"]?.ToString();
+                                        monitor.AppendLogFromStreamlabs_Bits(from, displayName, amount, msg);
+                                    }
+                                }
+                            }
+                            else if (type.ToLower().Equals("subscription")) // type.ToLower().Equals("submysterygift")
+                            {
+                                if (ev["message"] is JArray msgs)
+                                {
+                                    foreach (var m in msgs)
+                                    {
+                                        var subType = m["sub_type"]?.ToString()?.ToLower();
+                                        if (string.IsNullOrEmpty(subType))
+                                            continue;
+
+                                        var sub_plan = m["sub_plan"]?.ToString();
+
+                                        if (subType.Equals("subgift"))
                                         {
-                                            gifter_ac = Global.Custom_ANON;
-                                            gifter_display = Global.Custom_ANON;
+                                            var condition = m["condition"]?.ToString();
+                                            bool isAnon = (condition == "ANON_SUBSCRIPTION_GIFT" || condition == "MIN_ANON_SUBMYSTERYGIFT");
+                                            var gifter_ac = isAnon ? Global.Custom_ANON : m["gifter"]?.ToString();
+                                            var gifter_display = isAnon ? Global.Custom_ANON : m["gifter_display_name"]?.ToString();
+                                            if (gifter_ac?.ToLower().Equals("anonymous") == true)
+                                            {
+                                                gifter_ac = Global.Custom_ANON;
+                                                gifter_display = Global.Custom_ANON;
+                                            }
+                                            var amount = m["months"]?.ToString();
+#if DEBUG
+                                            gifter_ac += "(gifter_ac)";
+                                            gifter_display += "(gifter_display)";
+#endif
+                                            monitor.AppendLogFromStreamlabs_SubGift(gifter_ac, amount, gifter_display, SubPlanToText(sub_plan));
                                         }
-                                        var amount = m["months"]?.ToString();
+                                        else if (subType.Equals("resub"))
+                                        {
+                                            var subscriber_name = m["name"]?.ToString();
+                                            var subscriber_display = m["display_name"]?.ToString() ?? subscriber_name;
+                                            var months = m["months"]?.ToString();
 #if DEBUG
-                                        gifter_ac += "(gifter_ac)";
-                                        gifter_display += "(gifter_display)";
+                                            subscriber_name += "(name)";
+                                            subscriber_display += "(display)";
 #endif
-                                        monitor.AppendLogFromStreamlabs_SubGift(gifter_ac, amount, gifter_display, SubPlanToText(sub_plan));
-                                    }
-                                    else if (subType.Equals("resub"))
-                                    {
-                                        var subscriber_name = m["name"]?.ToString();
-                                        var subscriber_display = m["display_name"]?.ToString() ?? subscriber_name;
-                                        var months = m["months"]?.ToString();
+                                            monitor.AppendLogFromStreamlabs_Resub(subscriber_name, subscriber_display, months, SubPlanToText(sub_plan));
+                                        }
+                                        else if (subType.Equals("sub"))
+                                        {
+                                            var subscriber_name = m["name"]?.ToString();
+                                            var subscriber_display = m["display_name"]?.ToString() ?? subscriber_name;
+                                            var months = m["months"]?.ToString();
 #if DEBUG
-                                        subscriber_name += "(name)";
-                                        subscriber_display += "(display)";
+                                            subscriber_name += "(name)";
+                                            subscriber_display += "(display)";
 #endif
-                                        monitor.AppendLogFromStreamlabs_Resub(subscriber_name, subscriber_display, months, SubPlanToText(sub_plan));
-                                    }
-                                    else if (subType.Equals("sub"))
-                                    {
-                                        var subscriber_name = m["name"]?.ToString();
-                                        var subscriber_display = m["display_name"]?.ToString() ?? subscriber_name;
-                                        var months = m["months"]?.ToString();
-#if DEBUG
-                                        subscriber_name += "(name)";
-                                        subscriber_display += "(display)";
-#endif
-                                        monitor.AppendLogFromStreamlabs_Sub(subscriber_name, subscriber_display, months, SubPlanToText(sub_plan));
+                                            monitor.AppendLogFromStreamlabs_Sub(subscriber_name, subscriber_display, months, SubPlanToText(sub_plan));
+                                        }
                                     }
                                 }
                             }
+                        }
+                        catch (Exception ex)
+                        {
+                            Global.WriteErrorLog($"[Streamlabs] event handle error: {ex}");
                         }
                     }
                 });

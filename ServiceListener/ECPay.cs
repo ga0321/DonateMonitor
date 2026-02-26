@@ -37,12 +37,19 @@ namespace DonateMonitor.ServiceListener
                     Global.ECPAY_ListenKey,
                     (name, amount, msg) =>
                     {
+                        try
+                        {
 #if DEBUG
-                        Console.WriteLine(
-                            $"name={name}, amount={amount}, msg={msg}"
-                        );
+                            Console.WriteLine(
+                                $"name={name}, amount={amount}, msg={msg}"
+                            );
 #endif
-                        monitor.AppendLogFromECPay(name, amount, msg);
+                            monitor.AppendLogFromECPay(name, amount, msg);
+                        }
+                        catch (Exception ex)
+                        {
+                            Global.WriteErrorLog($"[ECPay] event handle error: {ex}");
+                        }
                     }
                 );
 

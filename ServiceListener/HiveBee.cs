@@ -135,20 +135,27 @@ namespace DonateMonitor.ServiceListener
 
                 _hub.On<string, int, object>("NotifyDonateObj", (type, value, data) =>
                 {
-                    var jo = data as JObject ?? JObject.FromObject(data);
-#if DEBUG
-                    Console.WriteLine($"HiveBee type={type} value={value} data={data}");
-#endif
-                    try { Global.WriteDebugLog($"[StreamLabs] {data?.ToString()}"); } catch { }
-
-                    // 1 = text, 6 = video
-                    var alertType = jo.Value<string>("Type"); // 測試環境是AlertType WTF
-                    if (type.Equals("tool") && (alertType.Equals("1") || alertType.Equals("6")))
+                    try
                     {
-                        string name = jo.Value<string>("Name") ?? "";
-                        string amount = jo["Amount"]?.ToString() ?? "0";
-                        string text = jo.Value<string>("Text") ?? "";
-                        monitor.AppendLogFromHiveBee(name, amount, text);
+                        var jo = data as JObject ?? JObject.FromObject(data);
+#if DEBUG
+                        Console.WriteLine($"HiveBee type={type} value={value} data={data}");
+#endif
+                        try { Global.WriteDebugLog($"[HiveBee] {data?.ToString()}"); } catch { }
+
+                        // 1 = text, 6 = video
+                        var alertType = jo.Value<string>("Type"); // 測試環境是AlertType WTF
+                        if (type.Equals("tool") && (alertType == "1" || alertType == "6"))
+                        {
+                            string name = jo.Value<string>("Name") ?? "";
+                            string amount = jo["Amount"]?.ToString() ?? "0";
+                            string text = jo.Value<string>("Text") ?? "";
+                            monitor.AppendLogFromHiveBee(name, amount, text);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Global.WriteErrorLog($"[HiveBee] event handle error: {ex}");
                     }
                 });
 
