@@ -9,6 +9,7 @@ namespace DonateMonitor
     {
         private static readonly string DbPath = "donate.db";
         private static readonly string ConnectionString = $"Data Source={DbPath};Version=3;Busy Timeout=60000;";
+        private static readonly object _accumulateLock = new object();
 
         static DonateDB()
         {
@@ -111,54 +112,57 @@ namespace DonateMonitor
             int amount,
             string subPlan)
         {
-            using (var conn = new SQLiteConnection(ConnectionString))
+            lock (_accumulateLock)
             {
-                conn.Open();
-                using (var transaction = conn.BeginTransaction())
+                using (var conn = new SQLiteConnection(ConnectionString))
                 {
-                    string type = Global.Custom_Sub_Gift;
-
-                    // 取得目前累計
-                    int currentTotal = 0;
-                    string sumSql = "SELECT COALESCE(SUM(Amount), 0) FROM DonateLog WHERE Account = @account AND Type = @type AND SubPlan = @subPlan";
-                    using (var cmd = new SQLiteCommand(sumSql, conn, transaction))
+                    conn.Open();
+                    using (var transaction = conn.BeginTransaction())
                     {
-                        cmd.Parameters.AddWithValue("@account", account ?? "");
-                        cmd.Parameters.AddWithValue("@type", type);
-                        cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
-                        currentTotal = Convert.ToInt32(cmd.ExecuteScalar());
-                    }
+                        string type = Global.Custom_Sub_Gift;
 
-                    // 刪除舊的行（可能有多筆歷史資料）
-                    string deleteSql = "DELETE FROM DonateLog WHERE Account = @account AND Type = @type AND SubPlan = @subPlan";
-                    using (var cmd = new SQLiteCommand(deleteSql, conn, transaction))
-                    {
-                        cmd.Parameters.AddWithValue("@account", account ?? "");
-                        cmd.Parameters.AddWithValue("@type", type);
-                        cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
-                        cmd.ExecuteNonQuery();
-                    }
+                        // 取得目前累計
+                        int currentTotal = 0;
+                        string sumSql = "SELECT COALESCE(SUM(Amount), 0) FROM DonateLog WHERE Account = @account AND Type = @type AND SubPlan = @subPlan";
+                        using (var cmd = new SQLiteCommand(sumSql, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@account", account ?? "");
+                            cmd.Parameters.AddWithValue("@type", type);
+                            cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
+                            currentTotal = Convert.ToInt32(cmd.ExecuteScalar());
+                        }
 
-                    // 寫入合併後的單筆記錄
-                    int newTotal = currentTotal + amount;
-                    string insertSql = @"
-                        INSERT INTO DonateLog (DateTime, Type, Account, DisplayName, Amount, Currency, Message, SubPlan)
-                        VALUES (@datetime, @type, @account, @displayName, @amount, @currency, @message, @subPlan)";
-                    using (var cmd = new SQLiteCommand(insertSql, conn, transaction))
-                    {
-                        cmd.Parameters.AddWithValue("@datetime", datetime);
-                        cmd.Parameters.AddWithValue("@type", type);
-                        cmd.Parameters.AddWithValue("@account", account ?? "");
-                        cmd.Parameters.AddWithValue("@displayName", displayName ?? "");
-                        cmd.Parameters.AddWithValue("@amount", newTotal);
-                        cmd.Parameters.AddWithValue("@currency", type);
-                        cmd.Parameters.AddWithValue("@message", "");
-                        cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
-                        cmd.ExecuteNonQuery();
-                    }
+                        // 刪除舊的行（可能有多筆歷史資料）
+                        string deleteSql = "DELETE FROM DonateLog WHERE Account = @account AND Type = @type AND SubPlan = @subPlan";
+                        using (var cmd = new SQLiteCommand(deleteSql, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@account", account ?? "");
+                            cmd.Parameters.AddWithValue("@type", type);
+                            cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
+                            cmd.ExecuteNonQuery();
+                        }
 
-                    transaction.Commit();
-                    return newTotal;
+                        // 寫入合併後的單筆記錄
+                        int newTotal = currentTotal + amount;
+                        string insertSql = @"
+                            INSERT INTO DonateLog (DateTime, Type, Account, DisplayName, Amount, Currency, Message, SubPlan)
+                            VALUES (@datetime, @type, @account, @displayName, @amount, @currency, @message, @subPlan)";
+                        using (var cmd = new SQLiteCommand(insertSql, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@datetime", datetime);
+                            cmd.Parameters.AddWithValue("@type", type);
+                            cmd.Parameters.AddWithValue("@account", account ?? "");
+                            cmd.Parameters.AddWithValue("@displayName", displayName ?? "");
+                            cmd.Parameters.AddWithValue("@amount", newTotal);
+                            cmd.Parameters.AddWithValue("@currency", type);
+                            cmd.Parameters.AddWithValue("@message", "");
+                            cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                        return newTotal;
+                    }
                 }
             }
         }
