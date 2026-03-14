@@ -152,10 +152,10 @@
 - 各平台的 Socket/SignalR 事件回調可能在不同執行緒上並發執行
 - Streamlabs 事件處理已卸載至背景執行緒（`Task.Run`），避免阻塞 SocketIO 接收循環導致心跳逾時斷線
 - 同一事件內的贈訂（subgift）會先按贈送者+訂閱層級聚合後再批次寫入 DB，大幅減少高併發時的 DB 操作次數
-- 層一贈訂的 `AccumulateSubGift` 使用 `lock` 序列化 read-delete-insert 操作，防止多執行緒並行時的 race condition 導致資料遺失
+- 所有資料庫寫入操作（Write、Insert、Update、Delete、AccumulateSubGift、Clear）共用同一把 `lock` 序列化，防止背景事件與 UI 資料管理併發寫入導致崩潰
 - SQLite 連線字串設定 `Busy Timeout=60000`，避免並發寫入時因鎖競爭導致 `SQLITE_BUSY` 錯誤
 - 層一贈訂使用 Transaction 保證讀取累計→刪除舊記錄→寫入合併記錄的原子性
-- 所有事件處理器皆包裹 try-catch，異常記錄至 `error.log`，單筆失敗不影響後續事件
+- 所有事件處理器與 UI 資料管理操作皆包裹 try-catch，異常記錄至 `error.log`，不會導致程式崩潰
 
 ## 已知問題
 

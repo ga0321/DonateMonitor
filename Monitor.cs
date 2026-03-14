@@ -483,7 +483,15 @@ namespace DonateMonitor
             var result = MessageBox.Show("確定要清除所有累計紀錄嗎？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
-                ClearSubGiftCount();
+                try
+                {
+                    ClearSubGiftCount();
+                }
+                catch (Exception ex)
+                {
+                    Global.WriteErrorLog($"[資料管理] 清除失敗: {ex}");
+                    MessageBox.Show($"清除資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -540,8 +548,16 @@ namespace DonateMonitor
 
         private void BtRefreshData_Click(object sender, EventArgs e)
         {
-            LoadDonateData();
-            AddLog("已重新載入資料");
+            try
+            {
+                LoadDonateData();
+                AddLog("已重新載入資料");
+            }
+            catch (Exception ex)
+            {
+                Global.WriteErrorLog($"[資料管理] 載入失敗: {ex}");
+                MessageBox.Show($"載入資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void BtAddData_Click(object sender, EventArgs e)
@@ -550,19 +566,27 @@ namespace DonateMonitor
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    int newId = DonateDB.Insert(
-                        form.RecordDateTime,
-                        form.RecordType,
-                        form.RecordAccount,
-                        form.RecordDisplayName,
-                        form.RecordAmount,
-                        form.RecordCurrency,
-                        form.RecordMessage,
-                        form.RecordSubPlan
-                    );
-                    LoadDonateData();
-                    ReloadObsData();
-                    AddLog($"已新增資料 (ID: {newId})");
+                    try
+                    {
+                        int newId = DonateDB.Insert(
+                            form.RecordDateTime,
+                            form.RecordType,
+                            form.RecordAccount,
+                            form.RecordDisplayName,
+                            form.RecordAmount,
+                            form.RecordCurrency,
+                            form.RecordMessage,
+                            form.RecordSubPlan
+                        );
+                        LoadDonateData();
+                        ReloadObsData();
+                        AddLog($"已新增資料 (ID: {newId})");
+                    }
+                    catch (Exception ex)
+                    {
+                        Global.WriteErrorLog($"[資料管理] 新增失敗: {ex}");
+                        MessageBox.Show($"新增資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
@@ -579,41 +603,59 @@ namespace DonateMonitor
             if (result != DialogResult.Yes)
                 return;
 
-            foreach (DataGridViewRow row in dgvDonateData.SelectedRows)
+            try
             {
-                if (row.DataBoundItem is DonateRecord record)
+                int deleteCount = 0;
+                foreach (DataGridViewRow row in dgvDonateData.SelectedRows)
                 {
-                    DonateDB.DeleteById(record.Id);
+                    if (row.DataBoundItem is DonateRecord record)
+                    {
+                        DonateDB.DeleteById(record.Id);
+                        deleteCount++;
+                    }
                 }
-            }
 
-            LoadDonateData();
-            ReloadObsData();
-            AddLog($"已刪除 {dgvDonateData.SelectedRows.Count} 筆資料");
+                LoadDonateData();
+                ReloadObsData();
+                AddLog($"已刪除 {deleteCount} 筆資料");
+            }
+            catch (Exception ex)
+            {
+                Global.WriteErrorLog($"[資料管理] 刪除失敗: {ex}");
+                MessageBox.Show($"刪除資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void BtSaveChanges_Click(object sender, EventArgs e)
         {
-            int updatedCount = 0;
-            foreach (var record in _donateRecords)
+            try
             {
-                DonateDB.UpdateById(
-                    record.Id,
-                    record.DateTime,
-                    record.Type,
-                    record.Account,
-                    record.DisplayName,
-                    record.Amount,
-                    record.Currency,
-                    record.Message,
-                    record.SubPlan
-                );
-                updatedCount++;
-            }
+                int updatedCount = 0;
+                foreach (var record in _donateRecords)
+                {
+                    DonateDB.UpdateById(
+                        record.Id,
+                        record.DateTime,
+                        record.Type,
+                        record.Account,
+                        record.DisplayName,
+                        record.Amount,
+                        record.Currency,
+                        record.Message,
+                        record.SubPlan
+                    );
+                    updatedCount++;
+                }
 
-            ReloadObsData();
-            AddLog($"已儲存 {updatedCount} 筆資料");
-            MessageBox.Show($"已儲存 {updatedCount} 筆資料", "完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ReloadObsData();
+                AddLog($"已儲存 {updatedCount} 筆資料");
+                MessageBox.Show($"已儲存 {updatedCount} 筆資料", "完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                Global.WriteErrorLog($"[資料管理] 儲存失敗: {ex}");
+                MessageBox.Show($"儲存資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void ReloadObsData()

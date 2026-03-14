@@ -9,7 +9,7 @@ namespace DonateMonitor
     {
         private static readonly string DbPath = "donate.db";
         private static readonly string ConnectionString = $"Data Source={DbPath};Version=3;Busy Timeout=60000;";
-        private static readonly object _accumulateLock = new object();
+        private static readonly object _dbWriteLock = new object();
 
         static DonateDB()
         {
@@ -60,24 +60,27 @@ namespace DonateMonitor
             string message,
             string subPlan = null)
         {
-            using (var conn = new SQLiteConnection(ConnectionString))
+            lock (_dbWriteLock)
             {
-                conn.Open();
-                string sql = @"
-                    INSERT INTO DonateLog (DateTime, Type, Account, DisplayName, Amount, Currency, Message, SubPlan)
-                    VALUES (@datetime, @type, @account, @displayName, @amount, @currency, @message, @subPlan)";
-
-                using (var cmd = new SQLiteCommand(sql, conn))
+                using (var conn = new SQLiteConnection(ConnectionString))
                 {
-                    cmd.Parameters.AddWithValue("@datetime", datetime);
-                    cmd.Parameters.AddWithValue("@type", type ?? "");
-                    cmd.Parameters.AddWithValue("@account", account ?? "");
-                    cmd.Parameters.AddWithValue("@displayName", displayName ?? "");
-                    cmd.Parameters.AddWithValue("@amount", (double)amount);
-                    cmd.Parameters.AddWithValue("@currency", currency ?? "");
-                    cmd.Parameters.AddWithValue("@message", message ?? "");
-                    cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
-                    cmd.ExecuteNonQuery();
+                    conn.Open();
+                    string sql = @"
+                        INSERT INTO DonateLog (DateTime, Type, Account, DisplayName, Amount, Currency, Message, SubPlan)
+                        VALUES (@datetime, @type, @account, @displayName, @amount, @currency, @message, @subPlan)";
+
+                    using (var cmd = new SQLiteCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@datetime", datetime);
+                        cmd.Parameters.AddWithValue("@type", type ?? "");
+                        cmd.Parameters.AddWithValue("@account", account ?? "");
+                        cmd.Parameters.AddWithValue("@displayName", displayName ?? "");
+                        cmd.Parameters.AddWithValue("@amount", (double)amount);
+                        cmd.Parameters.AddWithValue("@currency", currency ?? "");
+                        cmd.Parameters.AddWithValue("@message", message ?? "");
+                        cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
         }
@@ -112,7 +115,7 @@ namespace DonateMonitor
             int amount,
             string subPlan)
         {
-            lock (_accumulateLock)
+            lock (_dbWriteLock)
             {
                 using (var conn = new SQLiteConnection(ConnectionString))
                 {
@@ -172,14 +175,17 @@ namespace DonateMonitor
         /// </summary>
         public static void ClearByType(string type)
         {
-            using (var conn = new SQLiteConnection(ConnectionString))
+            lock (_dbWriteLock)
             {
-                conn.Open();
-                string sql = "DELETE FROM DonateLog WHERE Type = @type";
-                using (var cmd = new SQLiteCommand(sql, conn))
+                using (var conn = new SQLiteConnection(ConnectionString))
                 {
-                    cmd.Parameters.AddWithValue("@type", type);
-                    cmd.ExecuteNonQuery();
+                    conn.Open();
+                    string sql = "DELETE FROM DonateLog WHERE Type = @type";
+                    using (var cmd = new SQLiteCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@type", type);
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
         }
@@ -197,13 +203,16 @@ namespace DonateMonitor
         /// </summary>
         public static void ClearAll()
         {
-            using (var conn = new SQLiteConnection(ConnectionString))
+            lock (_dbWriteLock)
             {
-                conn.Open();
-                string sql = "DELETE FROM DonateLog";
-                using (var cmd = new SQLiteCommand(sql, conn))
+                using (var conn = new SQLiteConnection(ConnectionString))
                 {
-                    cmd.ExecuteNonQuery();
+                    conn.Open();
+                    string sql = "DELETE FROM DonateLog";
+                    using (var cmd = new SQLiteCommand(sql, conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
         }
@@ -331,14 +340,17 @@ namespace DonateMonitor
         /// </summary>
         public static void DeleteById(int id)
         {
-            using (var conn = new SQLiteConnection(ConnectionString))
+            lock (_dbWriteLock)
             {
-                conn.Open();
-                string sql = "DELETE FROM DonateLog WHERE Id = @id";
-                using (var cmd = new SQLiteCommand(sql, conn))
+                using (var conn = new SQLiteConnection(ConnectionString))
                 {
-                    cmd.Parameters.AddWithValue("@id", id);
-                    cmd.ExecuteNonQuery();
+                    conn.Open();
+                    string sql = "DELETE FROM DonateLog WHERE Id = @id";
+                    using (var cmd = new SQLiteCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", id);
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
         }
@@ -348,25 +360,28 @@ namespace DonateMonitor
         /// </summary>
         public static int Insert(string datetime, string type, string account, string displayName, decimal amount, string currency, string message, string subPlan)
         {
-            using (var conn = new SQLiteConnection(ConnectionString))
+            lock (_dbWriteLock)
             {
-                conn.Open();
-                string sql = @"
-                    INSERT INTO DonateLog (DateTime, Type, Account, DisplayName, Amount, Currency, Message, SubPlan)
-                    VALUES (@datetime, @type, @account, @displayName, @amount, @currency, @message, @subPlan);
-                    SELECT last_insert_rowid();";
-
-                using (var cmd = new SQLiteCommand(sql, conn))
+                using (var conn = new SQLiteConnection(ConnectionString))
                 {
-                    cmd.Parameters.AddWithValue("@datetime", datetime ?? "");
-                    cmd.Parameters.AddWithValue("@type", type ?? "");
-                    cmd.Parameters.AddWithValue("@account", account ?? "");
-                    cmd.Parameters.AddWithValue("@displayName", displayName ?? "");
-                    cmd.Parameters.AddWithValue("@amount", (double)amount);
-                    cmd.Parameters.AddWithValue("@currency", currency ?? "");
-                    cmd.Parameters.AddWithValue("@message", message ?? "");
-                    cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
-                    return Convert.ToInt32(cmd.ExecuteScalar());
+                    conn.Open();
+                    string sql = @"
+                        INSERT INTO DonateLog (DateTime, Type, Account, DisplayName, Amount, Currency, Message, SubPlan)
+                        VALUES (@datetime, @type, @account, @displayName, @amount, @currency, @message, @subPlan);
+                        SELECT last_insert_rowid();";
+
+                    using (var cmd = new SQLiteCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@datetime", datetime ?? "");
+                        cmd.Parameters.AddWithValue("@type", type ?? "");
+                        cmd.Parameters.AddWithValue("@account", account ?? "");
+                        cmd.Parameters.AddWithValue("@displayName", displayName ?? "");
+                        cmd.Parameters.AddWithValue("@amount", (double)amount);
+                        cmd.Parameters.AddWithValue("@currency", currency ?? "");
+                        cmd.Parameters.AddWithValue("@message", message ?? "");
+                        cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
+                        return Convert.ToInt32(cmd.ExecuteScalar());
+                    }
                 }
             }
         }
@@ -376,32 +391,35 @@ namespace DonateMonitor
         /// </summary>
         public static void UpdateById(int id, string datetime, string type, string account, string displayName, decimal amount, string currency, string message, string subPlan)
         {
-            using (var conn = new SQLiteConnection(ConnectionString))
+            lock (_dbWriteLock)
             {
-                conn.Open();
-                string sql = @"
-                    UPDATE DonateLog SET
-                        DateTime = @datetime,
-                        Type = @type,
-                        Account = @account,
-                        DisplayName = @displayName,
-                        Amount = @amount,
-                        Currency = @currency,
-                        Message = @message,
-                        SubPlan = @subPlan
-                    WHERE Id = @id";
-                using (var cmd = new SQLiteCommand(sql, conn))
+                using (var conn = new SQLiteConnection(ConnectionString))
                 {
-                    cmd.Parameters.AddWithValue("@id", id);
-                    cmd.Parameters.AddWithValue("@datetime", datetime ?? "");
-                    cmd.Parameters.AddWithValue("@type", type ?? "");
-                    cmd.Parameters.AddWithValue("@account", account ?? "");
-                    cmd.Parameters.AddWithValue("@displayName", displayName ?? "");
-                    cmd.Parameters.AddWithValue("@amount", (double)amount);
-                    cmd.Parameters.AddWithValue("@currency", currency ?? "");
-                    cmd.Parameters.AddWithValue("@message", message ?? "");
-                    cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
-                    cmd.ExecuteNonQuery();
+                    conn.Open();
+                    string sql = @"
+                        UPDATE DonateLog SET
+                            DateTime = @datetime,
+                            Type = @type,
+                            Account = @account,
+                            DisplayName = @displayName,
+                            Amount = @amount,
+                            Currency = @currency,
+                            Message = @message,
+                            SubPlan = @subPlan
+                        WHERE Id = @id";
+                    using (var cmd = new SQLiteCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", id);
+                        cmd.Parameters.AddWithValue("@datetime", datetime ?? "");
+                        cmd.Parameters.AddWithValue("@type", type ?? "");
+                        cmd.Parameters.AddWithValue("@account", account ?? "");
+                        cmd.Parameters.AddWithValue("@displayName", displayName ?? "");
+                        cmd.Parameters.AddWithValue("@amount", (double)amount);
+                        cmd.Parameters.AddWithValue("@currency", currency ?? "");
+                        cmd.Parameters.AddWithValue("@message", message ?? "");
+                        cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
         }
