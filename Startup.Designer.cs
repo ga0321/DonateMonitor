@@ -37,6 +37,8 @@
             this.label3 = new System.Windows.Forms.Label();
             this.Tb_HiveBeeAPIURL = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.Tb_SoundAlertsURL = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
@@ -61,7 +63,7 @@
             // BtnEnterMonitor
             // 
             this.BtnEnterMonitor.Font = new System.Drawing.Font("Noto Sans TC", 9F);
-            this.BtnEnterMonitor.Location = new System.Drawing.Point(12, 141);
+            this.BtnEnterMonitor.Location = new System.Drawing.Point(12, 174);
             this.BtnEnterMonitor.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.BtnEnterMonitor.Name = "BtnEnterMonitor";
             this.BtnEnterMonitor.Size = new System.Drawing.Size(1327, 35);
@@ -126,12 +128,33 @@
             this.label4.Size = new System.Drawing.Size(181, 27);
             this.label4.TabIndex = 9;
             this.label4.Text = "HiveBee通知網址：";
-            // 
+            //
+            // Tb_SoundAlertsURL
+            //
+            this.Tb_SoundAlertsURL.Font = new System.Drawing.Font("Noto Sans TC", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.Tb_SoundAlertsURL.Location = new System.Drawing.Point(283, 141);
+            this.Tb_SoundAlertsURL.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.Tb_SoundAlertsURL.Name = "Tb_SoundAlertsURL";
+            this.Tb_SoundAlertsURL.Size = new System.Drawing.Size(1050, 25);
+            this.Tb_SoundAlertsURL.TabIndex = 5;
+            //
+            // label5
+            //
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Noto Sans TC", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.label5.Location = new System.Drawing.Point(46, 139);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(240, 27);
+            this.label5.TabIndex = 10;
+            this.label5.Text = "SoundAlerts Overlay網址：";
+            //
             // Startup
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1345, 182);
+            this.ClientSize = new System.Drawing.Size(1345, 215);
+            this.Controls.Add(this.Tb_SoundAlertsURL);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.Tb_HiveBeeAPIURL);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.Tb_StreamlabsKey);
@@ -167,6 +190,8 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox Tb_HiveBeeAPIURL;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.TextBox Tb_SoundAlertsURL;
+        private System.Windows.Forms.Label label5;
     }
 }
 

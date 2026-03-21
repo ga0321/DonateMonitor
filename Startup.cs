@@ -24,6 +24,33 @@ namespace DonateMonitor
             Tb_OPayAPIURL.Text = Setting.Read(Setting.kOPAY_APIURL);
             Tb_StreamlabsKey.Text = Setting.Read(Setting.kSTREAMLABS_KEY);
             Tb_HiveBeeAPIURL.Text = Setting.Read(Setting.kHIVEBEE_KEY);
+            Tb_SoundAlertsURL.Text = Setting.Read(Setting.kSOUNDALERTS_OVERLAY_URL);
+
+            // 檢查是否有舊紀錄
+            try
+            {
+                if (Global.EnableStartupCheckOldData && DonateDB.HasAnyRecord())
+                {
+                    var result = MessageBox.Show(
+                        "發現上次的舊紀錄，是否要清除？",
+                        "DonateMonitor",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        string exportedFile = DonateDB.ExportToCsv();
+                        if (!string.IsNullOrEmpty(exportedFile))
+                            MessageBox.Show($"已匯出備份檔案: {exportedFile}", "DonateMonitor", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        DonateDB.ClearAll();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Global.WriteErrorLog($"[Startup] 檢查舊紀錄失敗: {ex}");
+            }
         }
 
         private static bool GetHttpResponse(string sApiUrl, out string osResult)
@@ -155,6 +182,15 @@ namespace DonateMonitor
         }
         #endregion
 
+        #region SoundAlerts
+        private bool InitSoundAlerts(string sUrl)
+        {
+            Setting.Save(Setting.kSOUNDALERTS_OVERLAY_URL, sUrl);
+            Global.SoundAlertsOverlayUrl = sUrl;
+            return true;
+        }
+        #endregion
+
         #region StreamLabs
         private bool InitStreamLabs(string sApiUrl)
         {
@@ -232,12 +268,28 @@ namespace DonateMonitor
             }
         }
 
+        private void BtInitSoundAlerts_Click()
+        {
+            var tb = Tb_SoundAlertsURL;
+            string sUrl = tb.Text;
+            if (string.IsNullOrEmpty(sUrl))
+            {
+                return;
+            }
+
+            if (InitSoundAlerts(sUrl))
+            {
+                tb.Enabled = false;
+            }
+        }
+
         private void BtnEnterMonitor_Click(object sender, EventArgs e)
         {
             BtInitECPay_Click();
             BtInitOPay_Click();
             BtInitStreamLabs_Click();
             BtInitHiveBee_Click();
+            BtInitSoundAlerts_Click();
 
             if (!Global.IsEnableAnyService())
             {

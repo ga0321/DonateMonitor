@@ -47,12 +47,14 @@ namespace DonateMonitor
             Tb_Msg_Streamlabs_Bits_Msg.Text = Global.Streamlabs_Bits_OBS_Msg;
             Tb_Msg_Streamlabs_Sub_Msg.Text = Global.Streamlabs_Sub_OBS_Msg;
             Tb_Msg_Streamlabs_Resub_Msg.Text = Global.Streamlabs_Resub_OBS_Msg;
+            Tb_Msg_SoundAlerts_Msg.Text = Global.SoundAlerts_OBS_Msg;
             Tb_Msg_Custom_Anon.Text = Global.Custom_ANON;
             Tb_Msg_Custom_Sub_Gift.Text = Global.Custom_Sub_Gift;
             Tb_Msg_Custom_Bits.Text = Global.Custom_Bits;
             Tb_Msg_Custom_Sub_Tier1.Text = Global.Custom_Sub_Tier1;
             Tb_Msg_Custom_Sub_Tier2.Text = Global.Custom_Sub_Tier2;
             Tb_Msg_Custom_Sub_Tier3.Text = Global.Custom_Sub_Tier3;
+            Cb_EnableStartupCheckOldData.Checked = Global.EnableStartupCheckOldData;
             Cb_EnableSubOutput.Checked = Global.EnableSubOutput;
             Cb_EnableResubOutput.Checked = Global.EnableResubOutput;
         }
@@ -72,12 +74,14 @@ namespace DonateMonitor
             Global.Streamlabs_Bits_OBS_Msg = Tb_Msg_Streamlabs_Bits_Msg.Text;
             Global.Streamlabs_Sub_OBS_Msg = Tb_Msg_Streamlabs_Sub_Msg.Text;
             Global.Streamlabs_Resub_OBS_Msg = Tb_Msg_Streamlabs_Resub_Msg.Text;
+            Global.SoundAlerts_OBS_Msg = Tb_Msg_SoundAlerts_Msg.Text;
             Global.Custom_ANON = Tb_Msg_Custom_Anon.Text;
             Global.Custom_Sub_Gift = Tb_Msg_Custom_Sub_Gift.Text;
             Global.Custom_Bits = Tb_Msg_Custom_Bits.Text;
             Global.Custom_Sub_Tier1 = Tb_Msg_Custom_Sub_Tier1.Text;
             Global.Custom_Sub_Tier2 = Tb_Msg_Custom_Sub_Tier2.Text;
             Global.Custom_Sub_Tier3 = Tb_Msg_Custom_Sub_Tier3.Text;
+            Global.EnableStartupCheckOldData = Cb_EnableStartupCheckOldData.Checked;
             Global.EnableSubOutput = Cb_EnableSubOutput.Checked;
             Global.EnableResubOutput = Cb_EnableResubOutput.Checked;
         }
@@ -105,12 +109,14 @@ namespace DonateMonitor
             var kOPAY_APIURL = Setting.Read(Setting.kOPAY_APIURL);
             var kSTREAMLABS_KEY = Setting.Read(Setting.kSTREAMLABS_KEY);
             var kHIVEBEE_KEY = Setting.Read(Setting.kHIVEBEE_KEY);
+            var kSOUNDALERTS_URL = Setting.Read(Setting.kSOUNDALERTS_OVERLAY_URL);
 
             Setting.Reset();
             Setting.Save(Setting.kECPAY_APIURL, kECPAY_APIURL);
             Setting.Save(Setting.kOPAY_APIURL, kOPAY_APIURL);
             Setting.Save(Setting.kSTREAMLABS_KEY, kSTREAMLABS_KEY);
             Setting.Save(Setting.kHIVEBEE_KEY, kHIVEBEE_KEY);
+            Setting.Save(Setting.kSOUNDALERTS_OVERLAY_URL, kSOUNDALERTS_URL);
             Global.InitSettings();
             Global.LoadSettings();
             LoadConfig();
@@ -169,6 +175,13 @@ namespace DonateMonitor
         {
             SaveSettings();
             _monitor.AppendLogFromStreamlabs_Resub("test", "測試續訂", "12", Streamlabs.SubPlanToText("1000"), true);
+            RestoreSettings();
+        }
+
+        private void BtPreview_SoundAlerts_Click(object sender, EventArgs e)
+        {
+            SaveSettings();
+            _monitor.AppendLogFromSoundAlerts("測試用戶", "100", "channel_points", true);
             RestoreSettings();
         }
     }

@@ -48,6 +48,22 @@ namespace DonateMonitor
         }
 
         /// <summary>
+        /// 資料庫中是否有記錄
+        /// </summary>
+        public static bool HasAnyRecord()
+        {
+            using (var conn = new SQLiteConnection(ConnectionString))
+            {
+                conn.Open();
+                string sql = "SELECT COUNT(*) FROM DonateLog LIMIT 1";
+                using (var cmd = new SQLiteCommand(sql, conn))
+                {
+                    return Convert.ToInt64(cmd.ExecuteScalar()) > 0;
+                }
+            }
+        }
+
+        /// <summary>
         /// 寫入捐贈記錄
         /// </summary>
         public static void Write(
@@ -381,6 +397,43 @@ namespace DonateMonitor
                         cmd.Parameters.AddWithValue("@message", message ?? "");
                         cmd.Parameters.AddWithValue("@subPlan", subPlan ?? "");
                         return Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 依 ID 原子性增加金額，回傳更新後的金額
+        /// </summary>
+        public static decimal AddAmountById(int id, decimal delta)
+        {
+            lock (_dbWriteLock)
+            {
+                using (var conn = new SQLiteConnection(ConnectionString))
+                {
+                    conn.Open();
+                    using (var transaction = conn.BeginTransaction())
+                    {
+                        string updateSql = "UPDATE DonateLog SET Amount = Amount + @delta WHERE Id = @id";
+                        using (var cmd = new SQLiteCommand(updateSql, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@id", id);
+                            cmd.Parameters.AddWithValue("@delta", (double)delta);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        decimal newAmount = 0;
+                        string selectSql = "SELECT Amount FROM DonateLog WHERE Id = @id";
+                        using (var cmd = new SQLiteCommand(selectSql, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@id", id);
+                            var result = cmd.ExecuteScalar();
+                            if (result != null)
+                                newAmount = Convert.ToDecimal(result);
+                        }
+
+                        transaction.Commit();
+                        return newAmount;
                     }
                 }
             }

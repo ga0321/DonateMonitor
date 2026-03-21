@@ -33,6 +33,7 @@
             this.RBt_ObsOutputMode_NextLine = new System.Windows.Forms.RadioButton();
             this.Cb_EnableSubOutput = new System.Windows.Forms.CheckBox();
             this.Cb_EnableResubOutput = new System.Windows.Forms.CheckBox();
+            this.Cb_EnableStartupCheckOldData = new System.Windows.Forms.CheckBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.BtPreview_HiveBee = new System.Windows.Forms.Button();
@@ -74,6 +75,9 @@
             this.Tb_Msg_Custom_Anon = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.BtReset = new System.Windows.Forms.Button();
+            this.BtPreview_SoundAlerts = new System.Windows.Forms.Button();
+            this.Tb_Msg_SoundAlerts_Msg = new System.Windows.Forms.TextBox();
+            this.label16 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -139,8 +143,22 @@
             this.Cb_EnableResubOutput.Text = "輸出續訂";
             this.Cb_EnableResubOutput.UseVisualStyleBackColor = true;
             //
+            // Cb_EnableStartupCheckOldData
+            //
+            this.Cb_EnableStartupCheckOldData.AutoSize = true;
+            this.Cb_EnableStartupCheckOldData.Checked = true;
+            this.Cb_EnableStartupCheckOldData.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.Cb_EnableStartupCheckOldData.Font = new System.Drawing.Font("Noto Sans TC", 14F);
+            this.Cb_EnableStartupCheckOldData.Location = new System.Drawing.Point(315, 61);
+            this.Cb_EnableStartupCheckOldData.Name = "Cb_EnableStartupCheckOldData";
+            this.Cb_EnableStartupCheckOldData.Size = new System.Drawing.Size(214, 31);
+            this.Cb_EnableStartupCheckOldData.TabIndex = 5;
+            this.Cb_EnableStartupCheckOldData.Text = "啟動時檢查舊資料";
+            this.Cb_EnableStartupCheckOldData.UseVisualStyleBackColor = true;
+            //
             // groupBox1
             //
+            this.groupBox1.Controls.Add(this.Cb_EnableStartupCheckOldData);
             this.groupBox1.Controls.Add(this.Cb_EnableResubOutput);
             this.groupBox1.Controls.Add(this.Cb_EnableSubOutput);
             this.groupBox1.Controls.Add(this.RBt_ObsOutputMode_Single);
@@ -155,6 +173,9 @@
             //
             // groupBox2
             //
+            this.groupBox2.Controls.Add(this.BtPreview_SoundAlerts);
+            this.groupBox2.Controls.Add(this.Tb_Msg_SoundAlerts_Msg);
+            this.groupBox2.Controls.Add(this.label16);
             this.groupBox2.Controls.Add(this.BtPreview_Streamlabs_Resub);
             this.groupBox2.Controls.Add(this.Tb_Msg_Streamlabs_Resub_Msg);
             this.groupBox2.Controls.Add(this.label15);
@@ -181,7 +202,7 @@
             this.groupBox2.Controls.Add(this.label2);
             this.groupBox2.Location = new System.Drawing.Point(12, 127);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(699, 389);
+            this.groupBox2.Size = new System.Drawing.Size(699, 430);
             this.groupBox2.TabIndex = 4;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "OBS輸出設定";
@@ -345,7 +366,36 @@
             this.label15.Size = new System.Drawing.Size(107, 27);
             this.label15.TabIndex = 26;
             this.label15.Text = "續訂輸出：";
-            // 
+            //
+            // BtPreview_SoundAlerts
+            //
+            this.BtPreview_SoundAlerts.Font = new System.Drawing.Font("Noto Sans TC", 12F);
+            this.BtPreview_SoundAlerts.Location = new System.Drawing.Point(631, 379);
+            this.BtPreview_SoundAlerts.Name = "BtPreview_SoundAlerts";
+            this.BtPreview_SoundAlerts.Size = new System.Drawing.Size(62, 35);
+            this.BtPreview_SoundAlerts.TabIndex = 29;
+            this.BtPreview_SoundAlerts.Text = "預覽";
+            this.BtPreview_SoundAlerts.UseVisualStyleBackColor = true;
+            this.BtPreview_SoundAlerts.Click += new System.EventHandler(this.BtPreview_SoundAlerts_Click);
+            //
+            // Tb_Msg_SoundAlerts_Msg
+            //
+            this.Tb_Msg_SoundAlerts_Msg.Font = new System.Drawing.Font("Noto Sans TC", 14F);
+            this.Tb_Msg_SoundAlerts_Msg.Location = new System.Drawing.Point(174, 379);
+            this.Tb_Msg_SoundAlerts_Msg.Name = "Tb_Msg_SoundAlerts_Msg";
+            this.Tb_Msg_SoundAlerts_Msg.Size = new System.Drawing.Size(451, 35);
+            this.Tb_Msg_SoundAlerts_Msg.TabIndex = 28;
+            //
+            // label16
+            //
+            this.label16.AutoSize = true;
+            this.label16.Font = new System.Drawing.Font("Noto Sans TC", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.label16.Location = new System.Drawing.Point(15, 382);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(162, 27);
+            this.label16.TabIndex = 27;
+            this.label16.Text = "SoundAlerts 輸出：";
+            //
             // Tb_Msg_Streamlabs_SubGift_Msg
             // 
             this.Tb_Msg_Streamlabs_SubGift_Msg.Font = new System.Drawing.Font("Noto Sans TC", 14F);
@@ -421,7 +471,7 @@
             // Bt_Save
             //
             this.Bt_Save.Font = new System.Drawing.Font("Noto Sans TC", 14F);
-            this.Bt_Save.Location = new System.Drawing.Point(12, 731);
+            this.Bt_Save.Location = new System.Drawing.Point(12, 772);
             this.Bt_Save.Name = "Bt_Save";
             this.Bt_Save.Size = new System.Drawing.Size(699, 46);
             this.Bt_Save.TabIndex = 5;
@@ -443,7 +493,7 @@
             this.groupBox3.Controls.Add(this.label8);
             this.groupBox3.Controls.Add(this.Tb_Msg_Custom_Anon);
             this.groupBox3.Controls.Add(this.label7);
-            this.groupBox3.Location = new System.Drawing.Point(12, 522);
+            this.groupBox3.Location = new System.Drawing.Point(12, 563);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(699, 203);
             this.groupBox3.TabIndex = 6;
@@ -561,7 +611,7 @@
             // BtReset
             //
             this.BtReset.Font = new System.Drawing.Font("Noto Sans TC", 14F);
-            this.BtReset.Location = new System.Drawing.Point(12, 783);
+            this.BtReset.Location = new System.Drawing.Point(12, 824);
             this.BtReset.Name = "BtReset";
             this.BtReset.Size = new System.Drawing.Size(699, 46);
             this.BtReset.TabIndex = 7;
@@ -573,7 +623,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(723, 841);
+            this.ClientSize = new System.Drawing.Size(723, 882);
             this.Controls.Add(this.BtReset);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.Bt_Save);
@@ -637,11 +687,15 @@
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.CheckBox Cb_EnableSubOutput;
         private System.Windows.Forms.CheckBox Cb_EnableResubOutput;
+        private System.Windows.Forms.CheckBox Cb_EnableStartupCheckOldData;
         private System.Windows.Forms.Button BtPreview_Streamlabs_Sub;
         private System.Windows.Forms.TextBox Tb_Msg_Streamlabs_Sub_Msg;
         private System.Windows.Forms.Label label14;
         private System.Windows.Forms.Button BtPreview_Streamlabs_Resub;
         private System.Windows.Forms.TextBox Tb_Msg_Streamlabs_Resub_Msg;
         private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.Button BtPreview_SoundAlerts;
+        private System.Windows.Forms.TextBox Tb_Msg_SoundAlerts_Msg;
+        private System.Windows.Forms.Label label16;
     }
 }

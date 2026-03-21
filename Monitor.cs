@@ -24,6 +24,11 @@ namespace DonateMonitor
         private readonly ServiceListener.OPay _servicesOPAY = new ServiceListener.OPay();
         private readonly ServiceListener.Streamlabs _servicesStreamlabs = new ServiceListener.Streamlabs();
         private readonly ServiceListener.HiveBee _servicesHiveBee = new ServiceListener.HiveBee();
+        private readonly Plugin.SoundAlerts _pluginSoundAlerts = new Plugin.SoundAlerts();
+        private volatile bool _dataGridDirty = false;
+        private bool _dataOperationInProgress = false;
+        private volatile bool _dataSyncing = false;
+        private readonly ConcurrentQueue<Action> _pendingEvents = new ConcurrentQueue<Action>();
         private void PrependText(TextBoxBase tb, string text)
         {
             tb.SuspendLayout();
@@ -52,6 +57,31 @@ namespace DonateMonitor
                         File.WriteAllText(obsFileName, string.Join(" ", lines), Encoding.UTF8);
                     else
                         File.WriteAllText(obsFileName, string.Join(Environment.NewLine, lines), Encoding.UTF8);
+                }
+
+                // 操作結束後，將排隊中的事件寫入 DB
+                if (!_pendingEvents.IsEmpty && !_dataOperationInProgress)
+                {
+                    _dataSyncing = true;
+                    try
+                    {
+                        while (_pendingEvents.TryDequeue(out var action))
+                        {
+                            try { action(); } catch (Exception ex) { Global.WriteErrorLog($"[Flush] {ex}"); }
+                        }
+                    }
+                    finally
+                    {
+                        _dataSyncing = false;
+                    }
+                    _dataGridDirty = true;
+                }
+
+                // 有新資料時刷新資料管理頁（操作中／同步中不刷新，避免重入）
+                if (_dataGridDirty && !_dataOperationInProgress && !_dataSyncing)
+                {
+                    _dataGridDirty = false;
+                    try { LoadDonateData(); } catch { }
                 }
             };
             _logTimer.Start();
@@ -111,6 +141,10 @@ namespace DonateMonitor
                 {
                     obsOutput = string.Format(Global.Streamlabs_Paypal_OBS_Msg, item.Account, formated_amount, item.Currency, item.SubPlan);
                 }
+                else if (item.Type == Global.Type_SoundAlerts)
+                {
+                    obsOutput = string.Format(Global.SoundAlerts_OBS_Msg, item.Account, formated_amount, item.Currency, item.SubPlan);
+                }
                 else
                 {
                     // 其他類型使用通用格式
@@ -122,6 +156,7 @@ namespace DonateMonitor
         }
         public void AppendLogFromECPay(string name, string amount, string msg, bool isPreview = false)
         {
+            if (!isPreview && _dataOperationInProgress) { _pendingEvents.Enqueue(() => AppendLogFromECPay(name, amount, msg)); return; }
             string type = Global.Type_ECPay;
             decimal donateAmount = 0;
             decimal.TryParse(amount, out donateAmount);
@@ -141,6 +176,7 @@ namespace DonateMonitor
         }
         public void AppendLogFromOPay(string name, string amount, string msg, bool isPreview = false)
         {
+            if (!isPreview && _dataOperationInProgress) { _pendingEvents.Enqueue(() => AppendLogFromOPay(name, amount, msg)); return; }
             string type = Global.Type_OPay;
             decimal donateAmount = 0;
             decimal.TryParse(amount, out donateAmount);
@@ -160,6 +196,7 @@ namespace DonateMonitor
         }
         public void AppendLogFromStreamlabs_Paypal(string name, string amount, string currency, string msg, bool isPreview = false)
         {
+            if (!isPreview && _dataOperationInProgress) { _pendingEvents.Enqueue(() => AppendLogFromStreamlabs_Paypal(name, amount, currency, msg)); return; }
             string type = Global.Type_Paypal;
             decimal donateAmount = 0;
             decimal.TryParse(amount, out donateAmount);
@@ -179,6 +216,7 @@ namespace DonateMonitor
         }
         public void AppendLogFromStreamlabs_Bits(string acc, string name, string amount, string msg, bool isPreview = false)
         {
+            if (!isPreview && _dataOperationInProgress) { _pendingEvents.Enqueue(() => AppendLogFromStreamlabs_Bits(acc, name, amount, msg)); return; }
             string type = Global.Custom_Bits;
             decimal donateAmount = 0;
             decimal.TryParse(amount, out donateAmount);
@@ -198,6 +236,7 @@ namespace DonateMonitor
         }
         public void AppendLogFromStreamlabs_SubGift(string acc, string amount, string displayName, string subplan, bool isPreview = false)
         {
+            if (!isPreview && _dataOperationInProgress) { _pendingEvents.Enqueue(() => AppendLogFromStreamlabs_SubGift(acc, amount, displayName, subplan)); return; }
             // 累加 subgift 並獲取累計後的數量
             int giftAmount = 1;
             int.TryParse(amount, out giftAmount);
@@ -229,6 +268,7 @@ namespace DonateMonitor
         }
         public void AppendLogFromStreamlabs_Resub(string acc, string displayName, string months, string subplan, bool isPreview = false)
         {
+            if (!isPreview && _dataOperationInProgress) { _pendingEvents.Enqueue(() => AppendLogFromStreamlabs_Resub(acc, displayName, months, subplan)); return; }
             string type = Global.Type_Resub;
             int monthsNum = 0;
             int.TryParse(months, out monthsNum);
@@ -249,6 +289,7 @@ namespace DonateMonitor
         }
         public void AppendLogFromStreamlabs_Sub(string acc, string displayName, string months, string subplan, bool isPreview = false)
         {
+            if (!isPreview && _dataOperationInProgress) { _pendingEvents.Enqueue(() => AppendLogFromStreamlabs_Sub(acc, displayName, months, subplan)); return; }
             string type = Global.Type_Sub;
             int monthsNum = 0;
             int.TryParse(months, out monthsNum);
@@ -287,6 +328,7 @@ namespace DonateMonitor
         }
         public void AppendLogFromHiveBee(string name, string amount, string msg, bool isPreview = false)
         {
+            if (!isPreview && _dataOperationInProgress) { _pendingEvents.Enqueue(() => AppendLogFromHiveBee(name, amount, msg)); return; }
             string type = Global.Type_HiveBee;
             decimal donateAmount = 0;
             decimal.TryParse(amount, out donateAmount);
@@ -304,6 +346,23 @@ namespace DonateMonitor
             // 使用累計金額輸出
             AppendLog(5, name, totalAmount.ToString(), msg, "TWD", null, isPreview);
         }
+        public void AppendLogFromSoundAlerts(string name, string amount, string costType, bool isPreview = false)
+        {
+            if (!isPreview && _dataOperationInProgress) { _pendingEvents.Enqueue(() => AppendLogFromSoundAlerts(name, amount, costType)); return; }
+            string type = Global.Type_SoundAlerts;
+            decimal donateAmount = 0;
+            decimal.TryParse(amount, out donateAmount);
+
+            if (!isPreview)
+            {
+                var nowFull = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                DonateDB.Write(nowFull, type, name, name, donateAmount, costType, "", null);
+            }
+
+            decimal totalAmount = isPreview ? donateAmount : DonateDB.GetTotalAmount(name, type);
+
+            AppendLog(8, name, totalAmount.ToString(), "", costType, null, isPreview);
+        }
         private void AppendLog(int nType, string name, string amount, string msg, string currency = "TWD", string subplan = null, bool isPreview = false, string acc = null)
         {
             if (string.IsNullOrEmpty(msg))
@@ -312,7 +371,12 @@ namespace DonateMonitor
             string type;
             string obsMsg;
             string displayName = null;
-            if (nType == 7)
+            if (nType == 8)
+            {
+                type = Global.Type_SoundAlerts;
+                obsMsg = Global.SoundAlerts_OBS_Msg;
+            }
+            else if (nType == 7)
             {
                 type = Global.Type_Sub;
                 obsMsg = Global.Streamlabs_Sub_OBS_Msg;
@@ -390,7 +454,8 @@ namespace DonateMonitor
             // 使用 name+type+subplan 作為 key，相同帳號+類型+層級只保留最新一筆
             string obsKey = $"{name}|{type}|{subplan ?? ""}";
             _obsDict[obsKey] = obsOutput;
-            // DB 寫入已在各個 AppendLogFrom* 方法中完成
+            // 標記資料管理頁需要刷新
+            _dataGridDirty = true;
         }
         public void AddLog(string sLog)
         {
@@ -425,6 +490,13 @@ namespace DonateMonitor
                 lbHiveBee_Status.Text = $"HiveBee 狀態：{(bActive ? "有效" : "無效")}";
             });
         }
+        public void SetActiveSoundAlerts(bool bActive)
+        {
+            SafeUpdateUI(() =>
+            {
+                lbSoundAlerts_Status.Text = $"SoundAlerts 狀態：{(bActive ? "有效" : "無效")}";
+            });
+        }
         private void SafeUpdateUI(Action action)
         {
             if (IsDisposed) return;
@@ -449,6 +521,10 @@ namespace DonateMonitor
             if (Global.IsEnableHiveBee())
             {
                 _ = _servicesHiveBee.StartAsync(this, _ctsServices.Token);
+            }
+            if (Global.IsEnableSoundAlerts())
+            {
+                _ = _pluginSoundAlerts.StartAsync(this, _ctsServices.Token);
             }
         }
         private async Task UninitServices()
@@ -480,18 +556,25 @@ namespace DonateMonitor
 
         private void BtClearDonateDB_Click(object sender, EventArgs e)
         {
-            var result = MessageBox.Show("確定要清除所有累計紀錄嗎？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (result == DialogResult.Yes)
+            if (_dataSyncing) { MessageBox.Show("資料同步中，請稍後", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
+            _dataOperationInProgress = true;
+            try
             {
-                try
+                var result = MessageBox.Show("確定要清除所有累計紀錄嗎？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result == DialogResult.Yes)
                 {
                     ClearSubGiftCount();
+                    LoadDonateData();
                 }
-                catch (Exception ex)
-                {
-                    Global.WriteErrorLog($"[資料管理] 清除失敗: {ex}");
-                    MessageBox.Show($"清除資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+            }
+            catch (Exception ex)
+            {
+                Global.WriteErrorLog($"[資料管理] 清除失敗: {ex}");
+                MessageBox.Show($"清除資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _dataOperationInProgress = false;
             }
         }
 
@@ -539,7 +622,8 @@ namespace DonateMonitor
                     Global.Type_Sub,
                     Global.Type_Resub,
                     Global.Custom_Sub_Gift,
-                    Global.Custom_Bits
+                    Global.Custom_Bits,
+                    Global.Type_SoundAlerts
                 });
 
                 dgvDonateData.Columns.Insert(typeColumnIndex, typeComboColumn);
@@ -562,11 +646,13 @@ namespace DonateMonitor
 
         private void BtAddData_Click(object sender, EventArgs e)
         {
-            using (var form = new AddDonateRecord())
+            if (_dataSyncing) { MessageBox.Show("資料同步中，請稍後", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
+            _dataOperationInProgress = true;
+            try
             {
-                if (form.ShowDialog() == DialogResult.OK)
+                using (var form = new AddDonateRecord())
                 {
-                    try
+                    if (form.ShowDialog() == DialogResult.OK)
                     {
                         int newId = DonateDB.Insert(
                             form.RecordDateTime,
@@ -582,12 +668,16 @@ namespace DonateMonitor
                         ReloadObsData();
                         AddLog($"已新增資料 (ID: {newId})");
                     }
-                    catch (Exception ex)
-                    {
-                        Global.WriteErrorLog($"[資料管理] 新增失敗: {ex}");
-                        MessageBox.Show($"新增資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Global.WriteErrorLog($"[資料管理] 新增失敗: {ex}");
+                MessageBox.Show($"新增資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _dataOperationInProgress = false;
             }
         }
 
@@ -599,12 +689,14 @@ namespace DonateMonitor
                 return;
             }
 
-            var result = MessageBox.Show($"確定要刪除選取的 {dgvDonateData.SelectedRows.Count} 筆資料嗎？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (result != DialogResult.Yes)
-                return;
-
+            if (_dataSyncing) { MessageBox.Show("資料同步中，請稍後", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
+            _dataOperationInProgress = true;
             try
             {
+                var result = MessageBox.Show($"確定要刪除選取的 {dgvDonateData.SelectedRows.Count} 筆資料嗎？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result != DialogResult.Yes)
+                    return;
+
                 int deleteCount = 0;
                 foreach (DataGridViewRow row in dgvDonateData.SelectedRows)
                 {
@@ -624,37 +716,144 @@ namespace DonateMonitor
                 Global.WriteErrorLog($"[資料管理] 刪除失敗: {ex}");
                 MessageBox.Show($"刪除資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            finally
+            {
+                _dataOperationInProgress = false;
+            }
         }
 
-        private void BtSaveChanges_Click(object sender, EventArgs e)
+        /// <summary>
+        /// ComboBox（類型下拉）選擇後立即 commit，觸發 CellValueChanged
+        /// </summary>
+        private void DgvDonateData_CurrentCellDirtyStateChanged(object sender, EventArgs e)
         {
+            if (dgvDonateData.IsCurrentCellDirty)
+                dgvDonateData.CommitEdit(DataGridViewDataErrorContexts.Commit);
+        }
+
+        /// <summary>
+        /// 儲存格值變更時自動儲存該筆記錄
+        /// </summary>
+        private void DgvDonateData_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            if (_dataSyncing) return;
+
+            // LoadDonateData 會重設 DataSource 觸發此事件，用旗標擋掉
+            if (_dataOperationInProgress) return;
+
+            _dataOperationInProgress = true;
             try
             {
-                int updatedCount = 0;
-                foreach (var record in _donateRecords)
-                {
-                    DonateDB.UpdateById(
-                        record.Id,
-                        record.DateTime,
-                        record.Type,
-                        record.Account,
-                        record.DisplayName,
-                        record.Amount,
-                        record.Currency,
-                        record.Message,
-                        record.SubPlan
-                    );
-                    updatedCount++;
-                }
+                if (e.RowIndex >= _donateRecords.Count) return;
+                var record = _donateRecords[e.RowIndex];
+
+                DonateDB.UpdateById(
+                    record.Id,
+                    record.DateTime,
+                    record.Type,
+                    record.Account,
+                    record.DisplayName,
+                    record.Amount,
+                    record.Currency,
+                    record.Message,
+                    record.SubPlan
+                );
 
                 ReloadObsData();
-                AddLog($"已儲存 {updatedCount} 筆資料");
-                MessageBox.Show($"已儲存 {updatedCount} 筆資料", "完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                AddLog($"已自動儲存 ID:{record.Id}（{record.Account}）");
             }
             catch (Exception ex)
             {
-                Global.WriteErrorLog($"[資料管理] 儲存失敗: {ex}");
-                MessageBox.Show($"儲存資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Global.WriteErrorLog($"[資料管理] 自動儲存失敗: {ex}");
+            }
+            finally
+            {
+                _dataOperationInProgress = false;
+            }
+        }
+
+        private void DgvDonateData_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button != System.Windows.Forms.MouseButtons.Right)
+                return;
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+                return;
+
+            var col = dgvDonateData.Columns[e.ColumnIndex];
+            if (col.DataPropertyName != "Amount" && col.Name != "Amount")
+                return;
+
+            // 選取該儲存格
+            dgvDonateData.CurrentCell = dgvDonateData[e.ColumnIndex, e.RowIndex];
+
+            // 取得螢幕座標並顯示右鍵選單
+            var cellRect = dgvDonateData.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, true);
+            var screenPoint = dgvDonateData.PointToScreen(new Point(cellRect.Left + e.X, cellRect.Top + e.Y));
+            cmsAmount.Tag = e.RowIndex;
+            cmsAmount.Show(screenPoint);
+        }
+
+        private void TsmiAddAmount_Click(object sender, EventArgs e)
+        {
+            int rowIndex = (int)cmsAmount.Tag;
+            if (rowIndex < 0 || rowIndex >= _donateRecords.Count)
+                return;
+
+            if (_dataSyncing) { MessageBox.Show("資料同步中，請稍後", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
+            _dataOperationInProgress = true;
+            try
+            {
+                var record = _donateRecords[rowIndex];
+                string input = ShowInputDialog("增加金額", $"目前金額: {record.Amount}\n請輸入要增加的金額：");
+                if (input == null)
+                    return;
+
+                if (!decimal.TryParse(input, out decimal addAmount))
+                {
+                    MessageBox.Show("請輸入有效的數字", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // 使用 DB 原子操作 Amount = Amount + delta，避免 read-modify-write 競爭
+                decimal newAmount = DonateDB.AddAmountById(record.Id, addAmount);
+                LoadDonateData();
+                ReloadObsData();
+                AddLog($"已增加金額 {addAmount} 至 ID:{record.Id}（{record.Account}），新金額: {newAmount}");
+            }
+            catch (Exception ex)
+            {
+                Global.WriteErrorLog($"[資料管理] 增加金額失敗: {ex}");
+                MessageBox.Show($"增加金額失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _dataOperationInProgress = false;
+            }
+        }
+
+        private string ShowInputDialog(string title, string prompt)
+        {
+            using (var form = new Form())
+            {
+                form.Text = title;
+                form.StartPosition = FormStartPosition.CenterParent;
+                form.FormBorderStyle = FormBorderStyle.FixedDialog;
+                form.MaximizeBox = false;
+                form.MinimizeBox = false;
+                form.ClientSize = new Size(350, 130);
+                form.Font = new Font("Noto Sans TC", 10F);
+
+                var label = new Label { Text = prompt, Left = 12, Top = 12, AutoSize = true };
+                var textBox = new TextBox { Left = 12, Top = 60, Width = 320 };
+                var btnOk = new Button { Text = "確定", DialogResult = DialogResult.OK, Left = 152, Top = 92, Width = 80 };
+                var btnCancel = new Button { Text = "取消", DialogResult = DialogResult.Cancel, Left = 240, Top = 92, Width = 80 };
+
+                form.Controls.AddRange(new Control[] { label, textBox, btnOk, btnCancel });
+                form.AcceptButton = btnOk;
+                form.CancelButton = btnCancel;
+
+                return form.ShowDialog() == DialogResult.OK ? textBox.Text.Trim() : null;
             }
         }
 

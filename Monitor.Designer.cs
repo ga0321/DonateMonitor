@@ -37,12 +37,14 @@
             this.lbOPAY_Status = new System.Windows.Forms.Label();
             this.lbStreamlabs_Status = new System.Windows.Forms.Label();
             this.lbHiveBee_Status = new System.Windows.Forms.Label();
+            this.lbSoundAlerts_Status = new System.Windows.Forms.Label();
             this.BtClearDonateDB = new System.Windows.Forms.Button();
             this.dgvDonateData = new System.Windows.Forms.DataGridView();
             this.BtRefreshData = new System.Windows.Forms.Button();
             this.BtAddData = new System.Windows.Forms.Button();
             this.BtDeleteSelected = new System.Windows.Forms.Button();
-            this.BtSaveChanges = new System.Windows.Forms.Button();
+            this.cmsAmount = new System.Windows.Forms.ContextMenuStrip();
+            this.tsmiAddAmount = new System.Windows.Forms.ToolStripMenuItem();
             this.tabControl.SuspendLayout();
             this.tabMonitor.SuspendLayout();
             this.tabData.SuspendLayout();
@@ -67,6 +69,7 @@
             this.tabMonitor.Controls.Add(this.lbOPAY_Status);
             this.tabMonitor.Controls.Add(this.lbHiveBee_Status);
             this.tabMonitor.Controls.Add(this.lbStreamlabs_Status);
+            this.tabMonitor.Controls.Add(this.lbSoundAlerts_Status);
             this.tabMonitor.Controls.Add(this.Tb_MonitorOut);
             this.tabMonitor.Controls.Add(this.BtConfig);
             this.tabMonitor.Controls.Add(this.BtClearDonateDB);
@@ -84,7 +87,6 @@
             this.tabData.Controls.Add(this.BtRefreshData);
             this.tabData.Controls.Add(this.BtAddData);
             this.tabData.Controls.Add(this.BtDeleteSelected);
-            this.tabData.Controls.Add(this.BtSaveChanges);
             this.tabData.Location = new System.Drawing.Point(4, 32);
             this.tabData.Name = "tabData";
             this.tabData.Padding = new System.Windows.Forms.Padding(3);
@@ -109,12 +111,12 @@
             | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Tb_MonitorOut.Font = new System.Drawing.Font("Noto Sans TC", 14F);
-            this.Tb_MonitorOut.Location = new System.Drawing.Point(6, 114);
+            this.Tb_MonitorOut.Location = new System.Drawing.Point(6, 141);
             this.Tb_MonitorOut.Multiline = true;
             this.Tb_MonitorOut.Name = "Tb_MonitorOut";
             this.Tb_MonitorOut.ReadOnly = true;
             this.Tb_MonitorOut.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.Tb_MonitorOut.Size = new System.Drawing.Size(925, 536);
+            this.Tb_MonitorOut.Size = new System.Drawing.Size(925, 509);
             this.Tb_MonitorOut.TabIndex = 2;
             //
             // BtConfig
@@ -147,6 +149,16 @@
             this.lbStreamlabs_Status.Size = new System.Drawing.Size(258, 34);
             this.lbStreamlabs_Status.TabIndex = 5;
             this.lbStreamlabs_Status.Text = "Streamlabs 狀態：無效";
+            //
+            // lbSoundAlerts_Status
+            //
+            this.lbSoundAlerts_Status.AutoSize = true;
+            this.lbSoundAlerts_Status.Font = new System.Drawing.Font("Noto Sans TC", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.lbSoundAlerts_Status.Location = new System.Drawing.Point(6, 111);
+            this.lbSoundAlerts_Status.Name = "lbSoundAlerts_Status";
+            this.lbSoundAlerts_Status.Size = new System.Drawing.Size(270, 34);
+            this.lbSoundAlerts_Status.TabIndex = 8;
+            this.lbSoundAlerts_Status.Text = "SoundAlerts 狀態：無效";
             //
             // lbHiveBee_Status
             //
@@ -184,6 +196,21 @@
             this.dgvDonateData.AllowUserToAddRows = false;
             this.dgvDonateData.AllowUserToDeleteRows = false;
             this.dgvDonateData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvDonateData.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DgvDonateData_CellMouseClick);
+            this.dgvDonateData.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.DgvDonateData_CellValueChanged);
+            this.dgvDonateData.CurrentCellDirtyStateChanged += new System.EventHandler(this.DgvDonateData_CurrentCellDirtyStateChanged);
+            //
+            // cmsAmount
+            //
+            this.cmsAmount.Items.Add(this.tsmiAddAmount);
+            this.cmsAmount.Name = "cmsAmount";
+            this.cmsAmount.Size = new System.Drawing.Size(140, 26);
+            //
+            // tsmiAddAmount
+            //
+            this.tsmiAddAmount.Name = "tsmiAddAmount";
+            this.tsmiAddAmount.Text = "增加金額";
+            this.tsmiAddAmount.Click += new System.EventHandler(this.TsmiAddAmount_Click);
             //
             // BtRefreshData
             //
@@ -214,16 +241,6 @@
             this.BtDeleteSelected.Text = "刪除選取";
             this.BtDeleteSelected.UseVisualStyleBackColor = true;
             this.BtDeleteSelected.Click += new System.EventHandler(this.BtDeleteSelected_Click);
-            //
-            // BtSaveChanges
-            //
-            this.BtSaveChanges.Location = new System.Drawing.Point(324, 6);
-            this.BtSaveChanges.Name = "BtSaveChanges";
-            this.BtSaveChanges.Size = new System.Drawing.Size(100, 33);
-            this.BtSaveChanges.TabIndex = 4;
-            this.BtSaveChanges.Text = "儲存修改";
-            this.BtSaveChanges.UseVisualStyleBackColor = true;
-            this.BtSaveChanges.Click += new System.EventHandler(this.BtSaveChanges_Click);
             //
             // Monitor
             //
@@ -258,11 +275,13 @@
         private System.Windows.Forms.Label lbOPAY_Status;
         private System.Windows.Forms.Label lbStreamlabs_Status;
         private System.Windows.Forms.Label lbHiveBee_Status;
+        private System.Windows.Forms.Label lbSoundAlerts_Status;
         private System.Windows.Forms.Button BtClearDonateDB;
         private System.Windows.Forms.DataGridView dgvDonateData;
         private System.Windows.Forms.Button BtRefreshData;
         private System.Windows.Forms.Button BtAddData;
         private System.Windows.Forms.Button BtDeleteSelected;
-        private System.Windows.Forms.Button BtSaveChanges;
+        private System.Windows.Forms.ContextMenuStrip cmsAmount;
+        private System.Windows.Forms.ToolStripMenuItem tsmiAddAmount;
     }
 }

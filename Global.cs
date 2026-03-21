@@ -16,6 +16,7 @@ namespace DonateMonitor
         static public readonly string kOPAY_APIURL = "OPAY_APIURL";
         static public readonly string kSTREAMLABS_KEY = "STREAMLABS_KEY";
         static public readonly string kHIVEBEE_KEY = "HIVEBEE_KEY";
+        static public readonly string kSOUNDALERTS_OVERLAY_URL = "SOUNDALERTS_OVERLAY_URL";
         static public readonly string kOBS_OUTPUT_MODE = "OBS_OUTPUT_MODE";
         static public readonly string kOBS_ECPAY_OUTPUT_MSG = "OBS_ECPAY_OUTPUT_MSG";
         static public readonly string kOBS_OPAY_OUTPUT_MSG = "OBS_OPAY_OUTPUT_MSG";
@@ -31,6 +32,8 @@ namespace DonateMonitor
         static public readonly string kCUSTOM_SUB_TIER3 = "CUSTOM_SUB_TIER3";
         static public readonly string kCUSTOM_SUB_GIFT = "CUSTOM_SUB_GIFT";
         static public readonly string kCUSTOM_BITS = "CUSTOM_BITS";
+        static public readonly string kOBS_SOUNDALERTS_OUTPUT_MSG = "OBS_SOUNDALERTS_OUTPUT_MSG";
+        static public readonly string kENABLE_STARTUP_CHECK_OLD_DATA = "ENABLE_STARTUP_CHECK_OLD_DATA";
         static public readonly string kENABLE_SUB_OUTPUT = "ENABLE_SUB_OUTPUT";
         static public readonly string kENABLE_RESUB_OUTPUT = "ENABLE_RESUB_OUTPUT";
         static public string Read(string sKey)
@@ -75,6 +78,7 @@ namespace DonateMonitor
         public static readonly string Type_Paypal = "Paypal(Streamlabs)";
         public static readonly string Type_Sub = "新訂閱";
         public static readonly string Type_Resub = "續訂";
+        public static readonly string Type_SoundAlerts = "音效(SoundAlerts)";
 
         static public bool _bExit = false;
         static private string _sECPAY_LoginToken = null;
@@ -82,6 +86,7 @@ namespace DonateMonitor
         static private string _sOPAY_ListenKey = null;
         static private string _sHiveBee_ListenKey = null;
         static private string _sStreamlabsKey = null;
+        static private string _sSoundAlertsOverlayUrl = null;
         static readonly object _logLock = new object();
         public struct VARS
         {
@@ -94,12 +99,14 @@ namespace DonateMonitor
             public string _sStreamlabs_SubGift_OBS_Msg;
             public string _sStreamlabs_Resub_OBS_Msg;
             public string _sStreamlabs_Sub_OBS_Msg;
+            public string _sSoundAlerts_OBS_Msg;
             public string _sCustom_ANON;
             public string _sCustom_Sub_Tier1;
             public string _sCustom_Sub_Tier2;
             public string _sCustom_Sub_Tier3;
             public string _sCustom_Sub_Gift;
             public string _sCustom_Bits;
+            public bool _bEnableStartupCheckOldData;
             public bool _bEnableSubOutput;
             public bool _bEnableResubOutput;
         }
@@ -131,6 +138,11 @@ namespace DonateMonitor
         {
             get => Volatile.Read(ref _sHiveBee_ListenKey);
             set => Interlocked.Exchange(ref _sHiveBee_ListenKey, value);
+        }
+        public static string SoundAlertsOverlayUrl
+        {
+            get => Volatile.Read(ref _sSoundAlertsOverlayUrl);
+            set => Interlocked.Exchange(ref _sSoundAlertsOverlayUrl, value);
         }
         public static int OBS_OutputMode
         {
@@ -177,6 +189,11 @@ namespace DonateMonitor
             get => Volatile.Read(ref _VARS._sStreamlabs_Sub_OBS_Msg);
             set => Interlocked.Exchange(ref _VARS._sStreamlabs_Sub_OBS_Msg, value);
         }
+        public static string SoundAlerts_OBS_Msg
+        {
+            get => Volatile.Read(ref _VARS._sSoundAlerts_OBS_Msg);
+            set => Interlocked.Exchange(ref _VARS._sSoundAlerts_OBS_Msg, value);
+        }
         public static string Custom_ANON
         {
             get => Volatile.Read(ref _VARS._sCustom_ANON);
@@ -207,6 +224,11 @@ namespace DonateMonitor
             get => Volatile.Read(ref _VARS._sCustom_Bits);
             set => Interlocked.Exchange(ref _VARS._sCustom_Bits, value);
         }
+        public static bool EnableStartupCheckOldData
+        {
+            get => Volatile.Read(ref _VARS._bEnableStartupCheckOldData);
+            set => Volatile.Write(ref _VARS._bEnableStartupCheckOldData, value);
+        }
         public static bool EnableSubOutput
         {
             get => Volatile.Read(ref _VARS._bEnableSubOutput);
@@ -228,12 +250,14 @@ namespace DonateMonitor
             _rVARS._sStreamlabs_SubGift_OBS_Msg = "{0}: {1}{2}({3})";
             _rVARS._sStreamlabs_Resub_OBS_Msg = "{0} 續訂{1}個月({2})";
             _rVARS._sStreamlabs_Sub_OBS_Msg = "{0} 新訂閱{1}個月({2})";
+            _rVARS._sSoundAlerts_OBS_Msg = "{0}: {1}{2}";
             _rVARS._sCustom_ANON = "匿名";
             _rVARS._sCustom_Sub_Tier1 = "層一";
             _rVARS._sCustom_Sub_Tier2 = "層二";
             _rVARS._sCustom_Sub_Tier3 = "層三";
             _rVARS._sCustom_Sub_Gift = "贈訂";
             _rVARS._sCustom_Bits = "小奇點";
+            _rVARS._bEnableStartupCheckOldData = true;
             _rVARS._bEnableSubOutput = true;
             _rVARS._bEnableResubOutput = true;
 
@@ -282,6 +306,10 @@ namespace DonateMonitor
             if (!string.IsNullOrEmpty(sVar))
                 Streamlabs_Sub_OBS_Msg = sVar;
 
+            sVar = Setting.Read(Setting.kOBS_SOUNDALERTS_OUTPUT_MSG);
+            if (!string.IsNullOrEmpty(sVar))
+                SoundAlerts_OBS_Msg = sVar;
+
             sVar = Setting.Read(Setting.kCUSTOM_ANON);
             if (!string.IsNullOrEmpty(sVar))
                 Custom_ANON = sVar;
@@ -306,6 +334,10 @@ namespace DonateMonitor
             if (!string.IsNullOrEmpty(sVar))
                 Custom_Bits = sVar;
 
+            sVar = Setting.Read(Setting.kENABLE_STARTUP_CHECK_OLD_DATA);
+            if (!string.IsNullOrEmpty(sVar))
+                EnableStartupCheckOldData = sVar.Equals("1");
+
             sVar = Setting.Read(Setting.kENABLE_SUB_OUTPUT);
             if (!string.IsNullOrEmpty(sVar))
                 EnableSubOutput = sVar.Equals("1");
@@ -325,12 +357,14 @@ namespace DonateMonitor
             Setting.Save(Setting.kOBS_STREAMLABS_SUBGIFT_OUTPUT_MSG, Streamlabs_SubGift_OBS_Msg);
             Setting.Save(Setting.kOBS_STREAMLABS_RESUB_OUTPUT_MSG, Streamlabs_Resub_OBS_Msg);
             Setting.Save(Setting.kOBS_STREAMLABS_SUB_OUTPUT_MSG, Streamlabs_Sub_OBS_Msg);
+            Setting.Save(Setting.kOBS_SOUNDALERTS_OUTPUT_MSG, SoundAlerts_OBS_Msg);
             Setting.Save(Setting.kCUSTOM_ANON, Custom_ANON);
             Setting.Save(Setting.kCUSTOM_SUB_TIER1, Custom_Sub_Tier1);
             Setting.Save(Setting.kCUSTOM_SUB_TIER2, Custom_Sub_Tier2);
             Setting.Save(Setting.kCUSTOM_SUB_TIER3, Custom_Sub_Tier3);
             Setting.Save(Setting.kCUSTOM_SUB_GIFT, Custom_Sub_Gift);
             Setting.Save(Setting.kCUSTOM_BITS, Custom_Bits);
+            Setting.Save(Setting.kENABLE_STARTUP_CHECK_OLD_DATA, EnableStartupCheckOldData ? "1" : "0");
             Setting.Save(Setting.kENABLE_SUB_OUTPUT, EnableSubOutput ? "1" : "0");
             Setting.Save(Setting.kENABLE_RESUB_OUTPUT, EnableResubOutput ? "1" : "0");
         }
@@ -407,13 +441,17 @@ namespace DonateMonitor
         {
             return !string.IsNullOrEmpty(HiveBeeKey);
         }
+        static public bool IsEnableSoundAlerts()
+        {
+            return !string.IsNullOrEmpty(SoundAlertsOverlayUrl);
+        }
         static public bool IsEnableAnyService()
         {
-            return IsEnableECPAY() || IsEnableOPAY() || IsEnableStreamlabs() || IsEnableHiveBee();
+            return IsEnableECPAY() || IsEnableOPAY() || IsEnableStreamlabs() || IsEnableHiveBee() || IsEnableSoundAlerts();
         }
         static public bool IsEnableAllService()
         {
-            return IsEnableECPAY() && IsEnableOPAY() && IsEnableStreamlabs() && IsEnableHiveBee();
+            return IsEnableECPAY() && IsEnableOPAY() && IsEnableStreamlabs() && IsEnableHiveBee() && IsEnableSoundAlerts();
         }
         static public string FormatAmount(string amount)
         {
